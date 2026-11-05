@@ -1,0 +1,3245 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+<!-- AGV 智慧物流倉儲調度模擬系統 (Smart Warehouse AGV Dispatching & Simulation) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AGV 智慧物流倉儲調度模擬系統 (AGV Smart Warehouse Simulation)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+        @keyframes gradientShift {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -1000px 0;
+            }
+
+            100% {
+                background-position: 1000px 0;
+            }
+        }
+
+        @keyframes glow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 5px currentColor;
+            }
+
+            50% {
+                box-shadow: 0 0 20px currentColor;
+            }
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0e1a 0%, #0f1729 25%, #1a1f3a 50%, #0f1729 75%, #0a0e1a 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 30s ease infinite;
+            color: #e2e8f0;
+        }
+
+        canvas {
+            background: linear-gradient(135deg, #0d1527 0%, #151e32 100%);
+            border-radius: 12px;
+            box-shadow:
+                inset 0 0 60px rgba(0, 0, 0, 0.5),
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(99, 102, 241, 0.1);
+            cursor: crosshair;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.4);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #475569 0%, #334155 100%);
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #64748b 0%, #475569 100%);
+        }
+
+        .glass-panel {
+            @apply bg-[#1e293b]/95 backdrop-blur-md border border-slate-700/50 shadow-xl rounded-xl;
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(148, 163, 184, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .btn {
+            @apply font-semibold py-2.5 px-4 rounded-lg transition-all duration-300 shadow-md flex items-center justify-center gap-2 text-xs cursor-pointer select-none transform active:scale-95 border border-transparent disabled:opacity-50 disabled:cursor-not-allowed;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            box-shadow:
+                0 2px 12px rgba(59, 130, 246, 0.35),
+                0 0 0 1px rgba(59, 130, 246, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+            box-shadow:
+                0 4px 16px rgba(59, 130, 246, 0.45),
+                0 0 0 1px rgba(59, 130, 246, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow:
+                0 2px 12px rgba(16, 185, 129, 0.35),
+                0 0 0 1px rgba(16, 185, 129, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+            box-shadow:
+                0 4px 16px rgba(16, 185, 129, 0.45),
+                0 0 0 1px rgba(16, 185, 129, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            box-shadow:
+                0 2px 12px rgba(245, 158, 11, 0.35),
+                0 0 0 1px rgba(245, 158, 11, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-warning:hover {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            box-shadow:
+                0 4px 16px rgba(245, 158, 11, 0.45),
+                0 0 0 1px rgba(245, 158, 11, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            box-shadow:
+                0 2px 12px rgba(239, 68, 68, 0.35),
+                0 0 0 1px rgba(239, 68, 68, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+            box-shadow:
+                0 4px 16px rgba(239, 68, 68, 0.45),
+                0 0 0 1px rgba(239, 68, 68, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .btn-tool {
+            @apply text-slate-300 border border-slate-600/70 transition-all flex flex-col items-center justify-center py-3 gap-1.5 h-16 rounded-lg;
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%);
+            position: relative;
+            overflow: hidden;
+            box-shadow:
+                0 2px 8px rgba(0, 0, 0, 0.25),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-tool::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(148, 163, 184, 0.15) 0%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .btn-tool:hover {
+            @apply text-white border-slate-500;
+            transform: translateY(-2px);
+            box-shadow:
+                0 6px 16px rgba(0, 0, 0, 0.35),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .btn-tool:hover::before {
+            opacity: 1;
+        }
+
+        .btn-tool.active {
+            @apply bg-indigo-600/25 border-indigo-500 text-indigo-300;
+            box-shadow:
+                0 0 24px rgba(99, 102, 241, 0.5),
+                0 0 0 1px rgba(99, 102, 241, 0.6),
+                inset 0 1px 0 rgba(99, 102, 241, 0.25);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .btn-tool.active-danger {
+            @apply bg-rose-600/25 border-rose-500 text-rose-300;
+            box-shadow:
+                0 0 24px rgba(244, 63, 94, 0.5),
+                0 0 0 1px rgba(244, 63, 94, 0.6),
+                inset 0 1px 0 rgba(244, 63, 94, 0.25);
+        }
+
+        .btn-tool.active-success {
+            @apply bg-emerald-600/25 border-emerald-500 text-emerald-300;
+            box-shadow:
+                0 0 24px rgba(16, 185, 129, 0.5),
+                0 0 0 1px rgba(16, 185, 129, 0.6),
+                inset 0 1px 0 rgba(16, 185, 129, 0.25);
+        }
+
+        .tab-bar {
+            display: flex;
+            gap: 0.25rem;
+            padding: 0.5rem;
+            border-radius: 0.75rem 0.75rem 0 0;
+            background: linear-gradient(180deg, rgba(15, 23, 42, 1) 0%, rgba(30, 41, 59, 0.95) 100%);
+            border-bottom: 2px solid rgba(59, 130, 246, 0.2);
+            box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .app-tab {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0.625rem 0.5rem;
+            font-size: 10px;
+            font-weight: 600;
+            color: #64748b;
+            border-radius: 0.5rem;
+            gap: 0.375rem;
+            border: 1px solid transparent;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            background: transparent;
+        }
+
+        .app-tab::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(100, 116, 139, 0.1) 0%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .app-tab:hover {
+            color: #cbd5e1;
+            background: rgba(51, 65, 85, 0.5);
+            border-color: rgba(100, 116, 139, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .app-tab:hover::before {
+            opacity: 1;
+        }
+
+        .app-tab.active {
+            color: #ffffff;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            box-shadow:
+                0 6px 16px rgba(59, 130, 246, 0.5),
+                0 0 0 1px rgba(59, 130, 246, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.25),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+            border-color: rgba(59, 130, 246, 0.4);
+            transform: translateY(-3px);
+        }
+
+        .app-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #60a5fa, transparent);
+            border-radius: 2px 2px 0 0;
+            box-shadow: 0 0 12px rgba(96, 165, 250, 0.8);
+        }
+
+        .app-tab i {
+            font-size: 0.875rem;
+            transition: transform 0.3s ease;
+        }
+
+        .app-tab.active i {
+            transform: scale(1.1);
+        }
+
+        .select-input {
+            width: 100%;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border-radius: 0.5rem;
+            padding: 0.625rem 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            /* 深色底 + 亮色文字 */
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            color: #f1f5f9;
+            border: 1px solid #475569;
+            box-shadow:
+                0 2px 8px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            outline: none;
+        }
+
+        .select-input:hover {
+            background: linear-gradient(135deg, #334155 0%, #475569 100%);
+            border-color: #64748b;
+            box-shadow:
+                0 4px 12px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .select-input:focus {
+            border-color: #3b82f6;
+            box-shadow:
+                0 0 0 3px rgba(59, 130, 246, 0.3),
+                0 4px 16px rgba(59, 130, 246, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+        }
+
+        .select-input option {
+            background: #1e293b;
+            color: #f1f5f9;
+            padding: 0.5rem;
+            font-weight: 600;
+        }
+
+        .select-input option:hover {
+            background: #3b82f6;
+            color: #ffffff;
+        }
+
+        .log-item {
+            @apply flex gap-3 items-start text-[10px] py-1.5 border-b border-slate-800/50 last:border-0 px-2 rounded transition-all;
+            position: relative;
+        }
+
+        .log-item::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, rgba(99, 102, 241, 0.05) 0%, transparent 100%);
+            opacity: 0;
+            border-radius: 0.375rem;
+            transition: opacity 0.2s ease;
+        }
+
+        .log-item:hover::before {
+            opacity: 1;
+        }
+
+        .log-item:hover {
+            transform: translateX(4px);
+        }
+
+        .log-time {
+            @apply text-slate-500 font-mono whitespace-nowrap pt-0.5;
+        }
+
+        .agv-card {
+            @apply border border-slate-700 rounded-lg p-2 mb-2 flex flex-col gap-1;
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.7) 100%);
+            box-shadow:
+                0 2px 8px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(148, 163, 184, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .agv-card:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                0 4px 12px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(99, 102, 241, 0.2);
+        }
+
+        .task-card {
+            @apply bg-slate-800 border-l-[3px] p-2 mb-2 rounded-r border-y border-r border-slate-700 relative;
+            background: linear-gradient(90deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
+            transition: all 0.3s ease;
+        }
+
+        .task-card:hover {
+            transform: translateX(4px);
+            box-shadow: -4px 0 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .task-history {
+            @apply border-l-slate-500 opacity-80;
+        }
+
+        /* Algorithm Info Cards */
+        .algo-card {
+            border: 1px solid rgba(71, 85, 105, 0.6);
+            border-radius: 0.75rem;
+            padding: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.875rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            height: 4.5rem;
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%);
+            box-shadow:
+                0 2px 10px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(148, 163, 184, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .algo-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent 0%, rgba(99, 102, 241, 0.08) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .algo-card:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                0 10px 25px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(99, 102, 241, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.12);
+            border-color: rgba(99, 102, 241, 0.6);
+        }
+
+        .algo-card:hover::before {
+            opacity: 1;
+        }
+
+        /* Better text styling for Chinese characters */
+        .algo-card .text-\[11px\] {
+            font-size: 0.75rem;
+            line-height: 1.4;
+            letter-spacing: 0.01em;
+            color: #ffffff;
+            font-weight: 700;
+            margin-bottom: 0.125rem;
+        }
+
+        .algo-card .text-\[10px\] {
+            font-size: 0.6875rem;
+            line-height: 1.5;
+            color: #94a3b8;
+            font-weight: 500;
+            letter-spacing: 0;
+        }
+
+        .algo-icon {
+            @apply w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg shrink-0;
+            box-shadow:
+                0 4px 12px rgba(0, 0, 0, 0.4),
+                0 0 20px rgba(var(--icon-color), 0.3),
+                inset 0 -2px 8px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .algo-icon::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 0.5rem;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
+        }
+
+        /* Tooltip Arrow */
+        .tooltip-arrow::before {
+            content: "";
+            position: absolute;
+            left: -4px;
+            top: 10px;
+            width: 0;
+            height: 0;
+            border-top: 4px solid transparent;
+            border-bottom: 4px solid transparent;
+            border-right: 4px solid #1e293b;
+        }
+
+        /* Carousel Styles */
+        .carousel-slide {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.7s ease;
+            opacity: 0;
+            transform: scale(0.95);
+            padding: 0.5rem 1rem;
+            pointer-events: none;
+        }
+
+        .carousel-slide.active {
+            opacity: 1;
+            z-index: 10;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+
+        .carousel-slide svg {
+            width: 100%;
+            height: 100%;
+            max-height: 100%;
+            filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.2));
+        }
+
+        .carousel-dot {
+            @apply w-2.5 h-2.5 rounded-full cursor-pointer transition-all duration-300;
+            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+        }
+
+        .carousel-dot:hover {
+            transform: scale(1.3);
+            background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+            box-shadow: 0 0 8px rgba(148, 163, 184, 0.5);
+        }
+
+        .carousel-dot.active {
+            @apply w-10 h-2.5;
+            background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+            box-shadow: 0 0 16px rgba(16, 185, 129, 0.8);
+            border: 1px solid rgba(16, 185, 129, 0.5);
+        }
+
+        input[type=range] {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            appearance: none;
+            cursor: pointer;
+            background: linear-gradient(90deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            box-shadow:
+                inset 0 2px 4px rgba(0, 0, 0, 0.6),
+                0 0 0 1px rgba(59, 130, 246, 0.2);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        input[type=range]:hover {
+            box-shadow:
+                inset 0 2px 4px rgba(0, 0, 0, 0.6),
+                0 0 0 1px rgba(59, 130, 246, 0.4),
+                0 0 8px rgba(59, 130, 246, 0.2);
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            cursor: grab;
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #2563eb 100%);
+            box-shadow:
+                0 0 0 2px rgba(15, 23, 42, 1),
+                0 0 0 3px rgba(59, 130, 246, 0.6),
+                0 2px 8px rgba(59, 130, 246, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                inset 0 -1px 2px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            box-shadow:
+                0 0 0 2px rgba(15, 23, 42, 1),
+                0 0 0 4px rgba(59, 130, 246, 0.8),
+                0 0 16px rgba(59, 130, 246, 0.6),
+                0 4px 12px rgba(59, 130, 246, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+            cursor: grab;
+        }
+
+        input[type=range]::-webkit-slider-thumb:active {
+            transform: scale(1.05);
+            cursor: grabbing;
+            box-shadow:
+                0 0 0 2px rgba(15, 23, 42, 1),
+                0 0 0 3px rgba(59, 130, 246, 1),
+                0 0 16px rgba(59, 130, 246, 0.8),
+                inset 0 2px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Firefox support */
+        input[type=range]::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: none;
+            cursor: grab;
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #2563eb 100%);
+            box-shadow:
+                0 0 0 2px rgba(15, 23, 42, 1),
+                0 0 0 3px rgba(59, 130, 246, 0.6),
+                0 2px 8px rgba(59, 130, 246, 0.4);
+        }
+
+        input[type=range]::-moz-range-track {
+            background: linear-gradient(90deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            border-radius: 4px;
+            height: 8px;
+        }
+
+        /* ===================================
+           RESPONSIVE DESIGN - MOBILE FIRST
+           =================================== */
+
+        /* Tablet: 768px - 1024px */
+        @media (max-width: 1024px) and (min-width: 768px) {
+            .w-\[360px\] {
+                width: 300px !important;
+            }
+
+            .algo-card {
+                padding: 0.5rem;
+                height: auto;
+                min-height: 60px;
+            }
+
+            .algo-icon {
+                width: 32px;
+                height: 32px;
+            }
+        }
+
+        /* Mobile: < 768px */
+        @media (max-width: 767px) {
+            body {
+                font-size: 14px;
+            }
+
+            /* Show hamburger, hide legend */
+            #mobile-menu-btn {
+                display: flex !important;
+            }
+
+            #legend-desktop {
+                display: none !important;
+            }
+
+            /* Header - compact */
+            header {
+                padding: 0.75rem !important;
+            }
+
+            header h1 {
+                font-size: 0.875rem !important;
+            }
+
+            header h1 span {
+                display: none;
+                /* Hide "Enterprise Edition" */
+            }
+
+            header .w-9 {
+                width: 2rem !important;
+                height: 2rem !important;
+            }
+
+            /* Main container - NO padding */
+            .flex.flex-1.min-h-0.p-4.gap-4 {
+                padding: 0 !important;
+                gap: 0 !important;
+            }
+
+            /* Left content area - FULL SCREEN */
+            .flex-1.flex.flex-col.min-w-0 {
+                width: 100% !important;
+                padding: 0.5rem;
+                gap: 0.5rem;
+            }
+
+            /* Algorithm cards - Horizontal scroll */
+            .grid.grid-cols-4 {
+                display: flex !important;
+                overflow-x: auto !important;
+                gap: 0.5rem !important;
+                height: auto !important;
+                padding-bottom: 0.5rem;
+                scroll-snap-type: x mandatory;
+            }
+
+            .grid.grid-cols-4::-webkit-scrollbar {
+                height: 4px;
+            }
+
+            .grid.grid-cols-4::-webkit-scrollbar-thumb {
+                background: #475569;
+                border-radius: 2px;
+            }
+
+            .algo-card {
+                flex-shrink: 0 !important;
+                width: 160px !important;
+                height: auto !important;
+                min-height: 60px !important;
+                padding: 0.5rem !important;
+                scroll-snap-align: start;
+            }
+
+            .algo-card .text-\[11px\] {
+                font-size: 10px !important;
+            }
+
+            .algo-card .text-\[10px\] {
+                display: none;
+                /* Hide long description */
+            }
+
+            .algo-icon {
+                width: 32px !important;
+                height: 32px !important;
+            }
+
+            /* Hide carousel on mobile */
+            .flex.gap-3.shrink-0.h-16 {
+                display: none !important;
+            }
+
+            /* Canvas - FULL HEIGHT */
+            .flex-1.relative.rounded-xl {
+                height: calc(100vh - 180px) !important;
+                border-radius: 0 !important;
+            }
+
+            /* Sidebar - FIXED POSITION, SLIDE IN FROM RIGHT */
+            .w-\[360px\] {
+                position: fixed !important;
+                top: 0 !important;
+                right: -100% !important;
+                width: 85vw !important;
+                max-width: 360px !important;
+                height: 100vh !important;
+                max-height: 100vh !important;
+                z-index: 50 !important;
+                transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                box-shadow: -8px 0 32px rgba(0, 0, 0, 0.6) !important;
+            }
+
+            .w-\[360px\].mobile-sidebar-open {
+                right: 0 !important;
+            }
+
+            /* Control panel - full height */
+            .flex-1.overflow-y-auto.p-4 {
+                padding: 1rem !important;
+                max-height: 100vh !important;
+            }
+
+            /* Buttons - larger for touch */
+            .btn {
+                min-height: 44px !important;
+                padding: 0.75rem !important;
+                font-size: 0.875rem !important;
+            }
+
+            .btn-tool {
+                height: 70px !important;
+                padding: 0.75rem !important;
+            }
+
+            /* Speed slider */
+            input[type=range] {
+                height: 10px !important;
+            }
+
+            input[type=range]::-webkit-slider-thumb {
+                width: 18px !important;
+                height: 18px !important;
+            }
+
+            /* Modal adjustments */
+            #algoModal .max-w-4xl {
+                max-width: 95vw !important;
+                max-height: 90vh !important;
+                margin: 0.5rem !important;
+            }
+
+            #algoModal .p-6 {
+                padding: 1rem !important;
+            }
+
+            #algoModal .text-2xl {
+                font-size: 1.125rem !important;
+            }
+
+            #algoModal .grid-cols-2 {
+                grid-template-columns: 1fr !important;
+            }
+
+            #algoModal .text-5xl {
+                font-size: 2rem !important;
+            }
+
+            /* Hide decorative corner borders */
+            .absolute.top-0.left-0.w-16,
+            .absolute.top-0.right-0.w-16,
+            .absolute.bottom-0.left-0.w-16,
+            .absolute.bottom-0.right-0.w-16 {
+                display: none !important;
+            }
+        }
+
+        /* Extra small mobile: < 480px */
+        @media (max-width: 479px) {
+            .algo-card {
+                min-height: 45px;
+                font-size: 0.75rem;
+            }
+
+            .carousel-slide .text-4xl {
+                font-size: 1.25rem !important;
+            }
+
+            header h1 {
+                font-size: 0.75rem !important;
+            }
+
+            .btn {
+                font-size: 0.75rem !important;
+            }
+        }
+
+        /* Landscape mobile optimization */
+        @media (max-width: 767px) and (orientation: landscape) {
+            .flex-1.flex.flex-col.min-w-0 {
+                min-height: 50vh;
+            }
+
+            .w-\[360px\] {
+                max-height: 100vh !important;
+                height: 100vh !important;
+            }
+
+            .w-\[360px\] .flex-1.overflow-y-auto {
+                max-height: calc(100vh - 120px) !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+
+            /* Fix task panel scrolling */
+            #content-tasks .flex-1.flex.flex-col.min-h-0 {
+                max-height: calc(100vh - 350px) !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+
+            #task-board {
+                max-height: calc(100vh - 400px) !important;
+                overflow-y: auto !important;
+            }
+
+            .grid.grid-cols-4 {
+                height: 70px !important;
+            }
+
+            .algo-card {
+                min-height: 35px;
+            }
+        }
+
+        /* QR Code Styles */
+        .qr-container {
+            position: relative;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
+            backdrop-filter: blur(12px);
+            border-radius: 0.75rem;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            box-shadow:
+                0 8px 24px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(148, 163, 184, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .qr-container:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                0 12px 32px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(59, 130, 246, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.12);
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+
+        .qr-container #qrcode {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            padding: 0.375rem;
+            border-radius: 0.5rem;
+        }
+
+        .qr-container #qrcode img {
+            display: block;
+            border-radius: 0.25rem;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .qr-label {
+            position: absolute;
+            top: -0.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            font-size: 0.625rem;
+            font-weight: 700;
+            padding: 0.125rem 0.5rem;
+            border-radius: 0.375rem;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+            letter-spacing: 0.025em;
+            z-index: 10;
+        }
+
+        @media (max-width: 768px) {
+            .qr-container {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <header
+        class="h-14 bg-[#0f172a] border-b border-slate-800 flex items-center justify-between px-5 shrink-0 z-20 shadow-md relative overflow-hidden">
+        <!-- Animated Background -->
+        <div class="absolute inset-0 bg-gradient-to-r from-blue-600/5 via-indigo-600/5 to-purple-600/5 opacity-50">
+        </div>
+        <div
+            class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAyKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-30">
+        </div>
+
+        <div class="flex items-center gap-4 relative z-10">
+            <div
+                class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30 relative overflow-hidden group">
+                <div
+                    class="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                </div>
+                <i class="fas fa-network-wired relative z-10"></i>
+            </div>
+            <div>
+                <h1 class="text-sm font-bold text-white tracking-wide flex items-center gap-2">
+                    AGV 智慧物流演示
+                    <span
+                        class="text-slate-500 font-normal text-xs bg-slate-800/60 px-2 py-0.5 rounded-md border border-slate-700/50">Enterprise
+                        Edition</span>
+                </h1>
+                <div class="flex items-center gap-2 mt-0.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981] animate-pulse"></span>
+                    <p class="text-[10px] text-slate-400 font-medium">System Online</p>
+                </div>
+            </div>
+
+            <!-- QR Code -->
+            <div class="qr-container ml-4">
+                <div class="qr-label">
+                    <i class="fas fa-mobile-alt mr-1"></i>手機掃描
+                </div>
+                <div id="qrcode"></div>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3 relative z-10">
+            <!-- Legend (Desktop) -->
+            <div id="legend-desktop"
+                class="flex gap-4 text-xs font-medium text-slate-300 bg-slate-800/60 backdrop-blur-sm px-4 py-1.5 rounded-full border border-slate-700/50 shadow-lg">
+                <div class="flex items-center gap-1.5 hover:text-white transition-colors">
+                    <span
+                        class="w-2.5 h-2.5 rounded-sm bg-blue-500/30 border border-blue-400 shadow-[0_0_8px_rgba(59,130,246,0.3)]"></span>
+                    貨架
+                </div>
+                <div class="flex items-center gap-1.5 hover:text-white transition-colors">
+                    <span class="w-2.5 h-2.5 rounded-full bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.4)]"></span>
+                    站點
+                </div>
+                <div class="flex items-center gap-1.5 hover:text-white transition-colors">
+                    <span
+                        class="w-2.5 h-2.5 rounded-sm bg-emerald-500/30 border border-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.3)]"></span>
+                    充電區
+                </div>
+                <div class="flex items-center gap-1.5 hover:text-white transition-colors">
+                    <span
+                        class="w-2.5 h-2.5 rounded-sm bg-rose-500/30 border border-rose-400 shadow-[0_0_8px_rgba(244,63,94,0.3)]"></span>
+                    狹道
+                </div>
+            </div>
+
+            <!-- Hamburger Menu Button (Mobile Only) -->
+            <button id="mobile-menu-btn" onclick="toggleMobileSidebar()"
+                class="hidden w-10 h-10 rounded-lg bg-slate-800/80 backdrop-blur-sm border border-slate-700 flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-700 hover:border-slate-600 transition-all shadow-lg">
+                <i class="fas fa-bars text-lg"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Sidebar Backdrop -->
+    <div id="mobile-backdrop" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"></div>
+
+    <div class="flex flex-1 min-h-0 p-4 gap-4 bg-[#0b1121]">
+
+        <!-- Left: Main Content -->
+        <div class="flex-1 flex flex-col min-w-0 relative gap-3">
+
+            <!-- Algorithm Info Bar (Fixed Top) -->
+            <div class="grid grid-cols-4 gap-3 shrink-0 h-20">
+                <div class="algo-card group cursor-pointer" onclick="sim.openAlgoModal(0)">
+                    <div class="algo-icon bg-gradient-to-br from-purple-500 to-indigo-600"><i class="fas fa-search"></i>
+                    </div>
+                    <div class="flex flex-col justify-center">
+                        <div class="text-[11px] text-slate-300 font-bold uppercase tracking-wide">BFS 區域識別</div>
+                        <div class="text-[10px] text-slate-500 group-hover:text-slate-400 transition-colors">
+                            自動掃描地圖特徵<br>建立互斥鎖區域</div>
+                    </div>
+                </div>
+                <div class="algo-card group cursor-pointer" onclick="sim.openAlgoModal(1)">
+                    <div class="algo-icon bg-gradient-to-br from-blue-500 to-cyan-600"><i
+                            class="fas fa-project-diagram"></i></div>
+                    <div class="flex flex-col justify-center">
+                        <div class="text-[11px] text-slate-300 font-bold uppercase tracking-wide">Min-Heap A*</div>
+                        <div class="text-[10px] text-slate-500 group-hover:text-slate-400 transition-colors">O(log N)
+                            高效尋路<br>動態障礙物迴避</div>
+                    </div>
+                </div>
+                <div class="algo-card group cursor-pointer" onclick="sim.openAlgoModal(2)">
+                    <div class="algo-icon bg-gradient-to-br from-emerald-500 to-green-600"><i
+                            class="fas fa-bezier-curve"></i></div>
+                    <div class="flex flex-col justify-center">
+                        <div class="text-[11px] text-slate-300 font-bold uppercase tracking-wide">最佳化派工</div>
+                        <div class="text-[10px] text-slate-500 group-hover:text-slate-400 transition-colors">
+                            成本矩陣分析<br>多目標決策優化</div>
+                    </div>
+                </div>
+                <div class="algo-card group cursor-pointer" onclick="sim.openAlgoModal(3)">
+                    <div class="algo-icon bg-gradient-to-br from-amber-500 to-orange-600"><i
+                            class="fas fa-traffic-light"></i></div>
+                    <div class="flex flex-col justify-center">
+                        <div class="text-[11px] text-slate-300 font-bold uppercase tracking-wide">智慧避讓</div>
+                        <div class="text-[10px] text-slate-500 group-hover:text-slate-400 transition-colors">
+                            死鎖預判與解除<br>動態讓路機制</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Row (Stats & Carousel) -->
+            <div class="flex gap-3 shrink-0 h-16">
+                <!-- 1. Performance Stats Panel -->
+                <div class="glass-panel w-48 flex flex-col justify-center px-3 py-2 relative z-30">
+                    <div class="flex justify-between items-center mb-1 border-b border-slate-700/50 pb-1">
+                        <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">系統負載</span>
+                        <!-- Tooltip Icon -->
+                        <div class="relative group/info pointer-events-auto">
+                            <i class="fas fa-info-circle text-slate-500 hover:text-blue-400 cursor-help text-xs"></i>
+                            <!-- Tooltip Content -->
+                            <div
+                                class="tooltip-arrow absolute left-full top-[-10px] ml-3 w-60 bg-slate-800 text-slate-300 text-[10px] p-3 rounded-lg border border-slate-600 shadow-2xl opacity-0 group-hover/info:opacity-100 transition-opacity duration-200 pointer-events-none z-50 leading-relaxed">
+                                <div class="mb-2">
+                                    <span class="font-bold text-purple-400 block mb-0.5">Heap Ops (堆積運算):</span>
+                                    A* 演算法在 Min-Heap 中執行節點插入/取出的累計次數。數值越高代表路徑搜索越複雜。
+                                </div>
+                                <div>
+                                    <span class="font-bold text-yellow-400 block mb-0.5">Task Queue (待辦佇列):</span>
+                                    目前等待指派的任務數量。若持續增加代表運能不足。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center mb-0.5">
+                        <span class="text-[10px] text-slate-300">Heap Ops</span>
+                        <span id="heap-stats" class="font-mono text-[11px] text-purple-400 font-bold">0</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] text-slate-300">Queue</span>
+                        <span id="queue-stats" class="font-mono text-[11px] text-yellow-400 font-bold">0</span>
+                    </div>
+                </div>
+
+                <!-- 2. Algorithm Info Carousel -->
+                <div class="glass-panel flex-1 relative z-0 overflow-hidden bg-slate-900/60 flex flex-col justify-center px-4"
+                    id="carousel-container">
+                    <!-- Slides Container -->
+                    <div id="carousel-slides" class="relative h-full w-full">
+                        <!-- Content Injected via JS -->
+                    </div>
+                    <!-- Dots -->
+                    <div id="carousel-dots" class="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 z-10">
+                        <!-- Dots Injected via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Canvas Container -->
+            <div class="flex-1 relative rounded-xl overflow-hidden group"
+                style="box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.15), 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.03);">
+                <canvas id="simCanvas" class="block w-full h-full"></canvas>
+
+                <!-- Decorative Corner Accents -->
+                <div
+                    class="absolute top-0 left-0 w-16 h-16 border-t-2 border-l-2 border-blue-500/30 rounded-tl-xl pointer-events-none">
+                </div>
+                <div
+                    class="absolute top-0 right-0 w-16 h-16 border-t-2 border-r-2 border-blue-500/30 rounded-tr-xl pointer-events-none">
+                </div>
+                <div
+                    class="absolute bottom-0 left-0 w-16 h-16 border-b-2 border-l-2 border-blue-500/30 rounded-bl-xl pointer-events-none">
+                </div>
+                <div
+                    class="absolute bottom-0 right-0 w-16 h-16 border-b-2 border-r-2 border-blue-500/30 rounded-br-xl pointer-events-none">
+                </div>
+
+                <!-- Tools Hint -->
+                <div id="active-tool-display"
+                    class="absolute top-4 right-4 px-4 py-2 text-xs font-bold text-slate-300 transform transition-all duration-300 opacity-0 translate-y-[-10px]"
+                    style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%); backdrop-filter: blur(12px); border-radius: 0.75rem; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);">
+                    <i class="fas fa-mouse-pointer mr-2 text-blue-400"></i> <span id="tool-name">一般模式</span>
+                </div>
+
+                <div class="absolute bottom-4 right-4 px-4 py-2 rounded-full text-[10px] text-slate-300 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none"
+                    style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%); backdrop-filter: blur(12px); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(148, 163, 184, 0.2);">
+                    <span class="flex items-center gap-1"><i class="fas fa-mouse text-blue-400"></i> 左鍵: 操作</span>
+                    <span class="w-px h-3 bg-slate-600"></span>
+                    <span class="flex items-center gap-1"><i class="fas fa-mouse text-rose-400"></i> 右鍵: 刪除</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Sidebar -->
+        <div class="w-[360px] flex flex-col shrink-0 gap-4">
+            <div class="glass-panel flex-1 flex flex-col overflow-hidden">
+                <div class="tab-bar">
+                    <button onclick="sim.setTab('controls')" id="tab-controls" class="app-tab active"><i
+                            class="fas fa-sliders-h"></i> 控制台</button>
+                    <button onclick="sim.setTab('fleet')" id="tab-fleet" class="app-tab"><i class="fas fa-server"></i>
+                        車隊</button>
+                    <button onclick="sim.setTab('tasks')" id="tab-tasks" class="app-tab"><i
+                            class="fas fa-clipboard-list"></i> 任務</button>
+                    <button onclick="sim.setTab('history')" id="tab-history" class="app-tab"><i
+                            class="fas fa-history"></i> 歷史</button>
+                    <button onclick="sim.setTab('logs')" id="tab-logs" class="app-tab"><i class="fas fa-code"></i>
+                        日誌</button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto p-4 bg-slate-900/30">
+                    <!-- TAB 1: CONTROLS -->
+                    <div id="content-controls" class="space-y-6">
+                        <div class="space-y-3">
+                            <h3
+                                class="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1 border-l-2 border-blue-500">
+                                地圖與場景</h3>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="sim.generateWarehouseMap()" class="btn btn-warning w-full"><i
+                                        class="fas fa-sync-alt"></i> 重生成地圖</button>
+                                <button onclick="sim.analyzeMap()" id="btn-analyze" class="btn btn-primary w-full"><i
+                                        class="fas fa-search-location"></i> 識別路網</button>
+                            </div>
+                        </div>
+                        <div class="space-y-3">
+                            <h3
+                                class="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1 border-l-2 border-indigo-500">
+                                編輯工具</h3>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="sim.setTool('drag')" id="tool-drag" class="btn-tool active group"><i
+                                        class="fas fa-hand-paper text-lg mb-1"></i><span
+                                        class="text-[9px]">移動</span></button>
+                                <button onclick="sim.setTool('add')" id="tool-add" class="btn-tool group"><i
+                                        class="fas fa-map-marker-alt text-lg mb-1"></i><span
+                                        class="text-[9px]">加站點</span></button>
+                                <button onclick="sim.setTool('add-charger')" id="tool-add-charger"
+                                    class="btn-tool group hover:border-emerald-500 hover:text-emerald-400"><i
+                                        class="fas fa-charging-station text-lg mb-1"></i><span
+                                        class="text-[9px]">加充電樁</span></button>
+                                <button onclick="sim.setTool('draw-danger')" id="tool-draw-danger"
+                                    class="btn-tool group hover:border-rose-500 hover:text-rose-400"><i
+                                        class="fas fa-ban text-lg mb-1"></i><span class="text-[9px]">畫禁區</span></button>
+                            </div>
+                            <div
+                                class="text-[10px] text-slate-500 text-center bg-slate-800/50 py-1.5 rounded border border-slate-700/50">
+                                <i class="fas fa-info-circle mr-1"></i> 右鍵點擊站點/充電樁可刪除</div>
+                        </div>
+                        <div class="space-y-3">
+                            <h3
+                                class="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1 border-l-2 border-emerald-500">
+                                車隊管理</h3>
+                            <div
+                                class="bg-slate-800/50 p-3 rounded-lg border border-slate-700/50 flex justify-between items-center">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-8 h-8 rounded bg-slate-700 flex items-center justify-center text-slate-300">
+                                        <i class="fas fa-truck-moving"></i></div>
+                                    <div>
+                                        <div class="text-[10px] text-slate-400">運作中 AGV</div>
+                                        <div class="text-sm font-bold text-white font-mono" id="val-agv">0</div>
+                                    </div>
+                                </div>
+                                <div class="flex gap-1">
+                                    <button onclick="sim.removeAGV()"
+                                        class="w-8 h-8 rounded hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition-colors border border-slate-600 hover:border-rose-500"><i
+                                            class="fas fa-minus"></i></button>
+                                    <button onclick="sim.addRandomAGV()"
+                                        class="w-8 h-8 rounded hover:bg-emerald-500/20 text-slate-400 hover:text-emerald-400 transition-colors border border-slate-600 hover:border-emerald-500"><i
+                                            class="fas fa-plus"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="space-y-3 pt-2">
+                            <div class="flex gap-2">
+                                <button onclick="sim.startSimulation()" id="btn-start"
+                                    class="btn btn-success flex-1 h-10 text-sm opacity-50 cursor-not-allowed"
+                                    disabled><i class="fas fa-play mr-1"></i> 啟動運作</button>
+                                <button onclick="sim.stopSimulation()" id="btn-stop"
+                                    class="btn btn-danger flex-1 h-10 text-sm opacity-50 cursor-not-allowed" disabled><i
+                                        class="fas fa-stop mr-1"></i> 停止</button>
+                            </div>
+                            <div class="bg-slate-800/50 px-3 py-2 rounded-lg border border-slate-700/50">
+                                <div class="flex justify-between text-[10px] text-slate-400 mb-2 font-medium"><span>模擬速度
+                                        (Speed)</span><span id="speed-val"
+                                        class="text-blue-400 font-mono bg-blue-900/30 px-1.5 rounded">1.0x</span></div>
+                                <input type="range" min="0.5" max="5.0" step="0.5" value="1.0"
+                                    oninput="sim.setSpeed(this.value)">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: FLEET -->
+                    <div id="content-fleet" class="hidden h-full flex flex-col">
+                        <div id="fleet-list" class="space-y-2">
+                            <div class="text-center text-slate-500 text-xs py-4">無車輛</div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: TASKS -->
+                    <div id="content-tasks" class="hidden h-full flex flex-col">
+                        <div
+                            class="bg-slate-800 p-4 rounded-xl border border-slate-700 mb-4 shadow-sm relative overflow-hidden">
+                            <div class="absolute top-0 right-0 p-2 opacity-10 text-6xl text-white pointer-events-none">
+                                <i class="fas fa-shipping-fast"></i></div>
+                            <h3 class="text-xs font-bold text-white mb-3 flex items-center gap-2 relative z-10"><span
+                                    class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> 手動派工</h3>
+                            <div class="space-y-3 relative z-10">
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div><label class="text-[9px] text-slate-400 font-bold block mb-1">起點
+                                            STATION</label><select id="sel-pickup" class="select-input"></select></div>
+                                    <div><label class="text-[9px] text-slate-400 font-bold block mb-1">終點
+                                            DELIVERY</label><select id="sel-delivery" class="select-input"></select>
+                                    </div>
+                                </div>
+                                <button onclick="sim.manualDispatch()" class="btn btn-primary w-full py-2.5"><i
+                                        class="fas fa-paper-plane"></i> 指派任務</button>
+                            </div>
+                        </div>
+                        <div
+                            class="flex items-center justify-between bg-slate-800/50 px-4 py-3 rounded-xl border border-slate-700 mb-4">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-8 h-8 rounded bg-purple-500/20 flex items-center justify-center text-purple-400 border border-purple-500/30">
+                                    <i class="fas fa-robot"></i></div>
+                                <div>
+                                    <div class="text-xs text-slate-200 font-bold">自動產生任務</div>
+                                    <div class="text-[9px] text-slate-500">模擬繁忙物流場景</div>
+                                </div>
+                            </div>
+                            <button id="btn-auto-gen" onclick="sim.toggleAutoGen()"
+                                class="relative inline-flex h-5 w-9 items-center rounded-full bg-emerald-500 transition-colors focus:outline-none"><span
+                                    id="auto-gen-knob"
+                                    class="inline-block h-3 w-3 transform rounded-full bg-white transition translate-x-5"></span></button>
+                        </div>
+                        <div
+                            class="flex-1 flex flex-col min-h-0 bg-slate-800/30 rounded-xl border border-slate-700 overflow-hidden">
+                            <div
+                                class="p-3 border-b border-slate-700/50 bg-slate-800/80 backdrop-blur-sm sticky top-0 z-10 flex justify-between items-center">
+                                <span class="text-xs font-bold text-slate-300">執行看板 (Kanban)</span>
+                                <span class="text-[9px] bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full font-mono"
+                                    id="task-count-badge">0</span>
+                            </div>
+                            <div id="task-board" class="flex-1 overflow-y-auto p-3 space-y-2">
+                                <div class="flex flex-col items-center justify-center h-32 text-slate-600 gap-2"><i
+                                        class="fas fa-inbox text-2xl opacity-30"></i><span
+                                        class="text-[10px]">目前無排程任務</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 4: HISTORY -->
+                    <div id="content-history" class="hidden h-full flex flex-col">
+                        <div class="flex items-center justify-between mb-3 px-1">
+                            <span class="text-xs font-bold text-slate-300">歷史任務紀錄</span>
+                            <button onclick="sim.clearHistory()" class="text-[10px] text-slate-500 hover:text-white"><i
+                                    class="fas fa-trash"></i></button>
+                        </div>
+                        <div
+                            class="flex-1 flex flex-col min-h-0 bg-slate-900/50 rounded-lg border border-slate-700/50 overflow-hidden">
+                            <div id="history-board" class="flex-1 overflow-y-auto p-3 space-y-2">
+                                <div class="text-center text-slate-600 text-[10px] mt-8 italic">無歷史紀錄</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 5: LOGS -->
+                    <div id="content-logs" class="hidden h-full flex flex-col">
+                        <div
+                            class="flex-1 flex flex-col min-h-0 bg-slate-950 rounded-xl border border-slate-800 overflow-hidden">
+                            <div class="p-2 border-b border-slate-800 flex justify-between items-center bg-slate-900">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider pl-2">System
+                                    Output</span>
+                                <button onclick="document.getElementById('log-content').innerHTML=''"
+                                    class="text-[10px] text-slate-500 hover:text-white px-2 py-1"><i
+                                        class="fas fa-trash-alt"></i> 清除</button>
+                            </div>
+                            <div id="log-content" class="flex-1 overflow-y-auto p-3 font-mono space-y-1"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. DATA STRUCTURES ---
+        /**
+         * =========================================================================
+         * 最小堆積 (Min-Heap) 資料結構
+         * Min-Heap Data Structure
+         * =========================================================================
+         * 【繁體中文說明】：
+         * 想像排隊時，工作人員永遠讓「數字最小的人」站在最前面。
+         * 在 A* 尋路演算法中，我們需要不斷從候選格子中找出「總預估成本 (f)」最低的格子。
+         * 如果用一般的清單每次都要重頭找一遍（花費 O(N) 時間）；
+         * 但使用二元樹形狀的「最小堆積」，只要花費 O(log N) 的極短時間就能把最優節點抓出來！
+         *
+         * [US English Description]:
+         * Imagine a queue where the item with the smallest value is always kept at the very front.
+         * In the A* pathfinding algorithm, we repeatedly need to extract the cell with the lowest
+         * estimated total cost (f). A normal array takes O(N) time to scan, but a binary Min-Heap
+         * can insert and extract the minimum node in ultra-fast O(log N) time!
+         * =========================================================================
+         */
+        class MinHeap {
+            constructor() { this.heap = []; this.ops = 0; }
+            insert(node) { this.heap.push(node); this.bubbleUp(); this.ops++; }
+            extractMin() {
+                if (this.heap.length === 0) return null;
+                if (this.heap.length === 1) return this.heap.pop();
+                const min = this.heap[0]; this.heap[0] = this.heap.pop(); this.sinkDown(); this.ops++; return min;
+            }
+            bubbleUp() {
+                let index = this.heap.length - 1;
+                while (index > 0) {
+                    let pIdx = Math.floor((index - 1) / 2);
+                    if (this.heap[pIdx].f <= this.heap[index].f) break;
+                    [this.heap[index], this.heap[pIdx]] = [this.heap[pIdx], this.heap[index]];
+                    index = pIdx;
+                }
+            }
+            sinkDown() {
+                let index = 0, len = this.heap.length, el = this.heap[0];
+                while (true) {
+                    let lIdx = 2 * index + 1, rIdx = 2 * index + 2, swap = null;
+                    if (lIdx < len && this.heap[lIdx].f < el.f) swap = lIdx;
+                    if (rIdx < len && ((swap === null && this.heap[rIdx].f < el.f) || (swap !== null && this.heap[rIdx].f < this.heap[lIdx].f))) swap = rIdx;
+                    if (swap === null) break;
+                    [this.heap[index], this.heap[swap]] = [this.heap[swap], this.heap[index]];
+                    index = swap;
+                }
+            }
+            size() { return this.heap.length; }
+        }
+
+        // --- 2. MAP & CONFIG ---
+        const GRID_W = 40, GRID_H = 25, CELL_SIZE = 22;
+        let MAP = [], AISLE_MAP = [];
+        let STATIONS = {};
+        let CHARGERS = [];
+        let nextStationChar = 65;
+
+        function loadRandomMap() {
+            MAP = Array(GRID_H).fill().map(() => Array(GRID_W).fill(0));
+            AISLE_MAP = Array(GRID_H).fill().map(() => Array(GRID_W).fill(0));
+
+            const numAisles = 5;
+            let placedCount = 0, attempts = 0;
+            while (placedCount < numAisles && attempts < 200) {
+                attempts++;
+                let isH = Math.random() > 0.5;
+                let len = 10 + Math.floor(Math.random() * 8);
+                if (isH) {
+                    let x = 2 + Math.floor(Math.random() * (GRID_W - len - 4));
+                    let y = 3 + Math.floor(Math.random() * (GRID_H - 6));
+                    let clear = true;
+                    for (let r = y - 1; r < y + 4; r++) for (let c = x - 1; c < x + len + 1; c++) if (r >= 0 && r < GRID_H && c >= 0 && c < GRID_W && MAP[r][c] === 1) clear = false;
+                    if (clear) {
+                        for (let c = x; c < x + len; c++) MAP[y][c] = 1;
+                        for (let c = x; c < x + len; c++) MAP[y + 2][c] = 1;
+                        placedCount++;
+                    }
+                } else {
+                    let x = 3 + Math.floor(Math.random() * (GRID_W - 6));
+                    let y = 2 + Math.floor(Math.random() * (GRID_H - len - 4));
+                    let clear = true;
+                    for (let r = y - 1; r < y + len + 1; r++) for (let c = x - 1; c < x + 4; c++) if (r >= 0 && r < GRID_H && c >= 0 && c < GRID_W && MAP[r][c] === 1) clear = false;
+                    if (clear) {
+                        for (let r = y; r < y + len; r++) MAP[r][x] = 1;
+                        for (let r = y; r < y + len; r++) MAP[r][x + 2] = 1;
+                        placedCount++;
+                    }
+                }
+            }
+            // Clear borders for parking
+            for (let x = 0; x < GRID_W; x++) { MAP[0][x] = 0; MAP[1][x] = 0; MAP[GRID_H - 1][x] = 0; MAP[GRID_H - 2][x] = 0; }
+
+            STATIONS = {}; nextStationChar = 65;
+            for (let i = 0; i < 3; i++) sim.addRandomStation(true);
+
+            // Add default charger
+            CHARGERS = [{ x: 2, y: 0 }];
+            MAP[0][2] = 0; // Ensure floor
+        }
+
+        /**
+         * =========================================================================
+         * 地圖分析器 (Map Analyzer - BFS 狹窄走道識別)
+         * Map Analyzer - BFS Corridor Detection
+         * =========================================================================
+         * 【繁體中文說明】：
+         * 就像水流從起點蔓延一樣，利用「廣度優先搜尋 (BFS)」自動掃描整個倉儲地圖。
+         * 當程式發現某個格子「上下被貨架包夾」或「左右被貨架包夾」，就代表這是一條狹窄走道！
+         * 演算法會順著走道擴散，將同一直線的走道格子編號為同一個區域 ID，交給互斥鎖保護。
+         *
+         * [US English Description]:
+         * Like water expanding outward, this module uses Breadth-First Search (BFS) to inspect the map.
+         * When a floor tile is flanked by shelves vertically or horizontally, it indicates a narrow corridor.
+         * The algorithm groups contiguous corridor tiles under a single region ID for mutex lock management.
+         * =========================================================================
+         */
+        class MapAnalyzer {
+            static detectAisles(map, aisleMap) {
+                for (let y = 0; y < GRID_H; y++) for (let x = 0; x < GRID_W; x++) if (aisleMap[y][x] < 1000) aisleMap[y][x] = 0;
+                let idCounter = 1, visited = new Set();
+                for (let y = 1; y < GRID_H - 1; y++) {
+                    for (let x = 1; x < GRID_W - 1; x++) {
+                        if (map[y][x] !== 0 || visited.has(`${x},${y}`) || aisleMap[y][x] > 0) continue;
+                        let isH = (map[y - 1][x] === 1 && map[y + 1][x] === 1);
+                        let isV = (map[y][x - 1] === 1 && map[y][x + 1] === 1);
+                        if (isH || isV) {
+                            let nodes = this.growRegion(map, x, y, visited, isH, isV, aisleMap);
+                            let regionId = idCounter++;
+                            nodes.forEach(n => aisleMap[n.y][n.x] = regionId);
+                        }
+                    }
+                }
+                return idCounter - 1;
+            }
+            static growRegion(map, sx, sy, visited, matchH, matchV, aisleMap) {
+                let q = [{ x: sx, y: sy }], nodes = []; visited.add(`${sx},${sy}`);
+                while (q.length) {
+                    let curr = q.shift(); nodes.push(curr);
+                    [[0, 1], [0, -1], [1, 0], [-1, 0]].forEach(d => {
+                        let nx = curr.x + d[0], ny = curr.y + d[1];
+                        if (nx > 0 && nx < GRID_W - 1 && ny > 0 && ny < GRID_H - 1 && map[ny][nx] === 0 && !visited.has(`${nx},${ny}`) && aisleMap[ny][nx] === 0) {
+                            let isH = (map[ny - 1][nx] === 1 && map[ny + 1][nx] === 1);
+                            let isV = (map[ny][nx - 1] === 1 && map[ny][nx + 1] === 1);
+                            if ((matchH && isH) || (matchV && isV)) { visited.add(`${nx},${ny}`); q.push({ x: nx, y: ny }); }
+                        }
+                    });
+                }
+                return nodes;
+            }
+        }
+
+        class Node { constructor(x, y, p = null) { this.x = x; this.y = y; this.parent = p; this.g = 0; this.h = 0; this.f = 0; } }
+        /**
+         * =========================================================================
+         * A* 最短路徑搜尋演算法 (A* Path Finder)
+         * A* Shortest Pathfinding Algorithm
+         * =========================================================================
+         * 【繁體中文說明】：
+         * A* 是全世界最經典的尋路演算法。核心公式：f(n) = g(n) + h(n)
+         * - g(n)：從起點走到現在這格的「實際步數」。
+         * - h(n)：從現在這格到終點的「曼哈頓距離」預估值 (|x1 - x2| + |y1 - y2|)。
+         * - f(n)：總評估成本。每次挑選 f(n) 最小的格子優先擴展。
+         * 本實作還加入了「轉彎懲罰 (Turn Penalty = 0.5)」，讓 AGV 沒事不要亂扭，盡量走直線！
+         *
+         * [US English Description]:
+         * A* is the most celebrated heuristic pathfinding algorithm. Core formula: f(n) = g(n) + h(n)
+         * - g(n): Actual distance walked from the start cell.
+         * - h(n): Estimated Manhattan distance heuristic remaining to the target.
+         * - f(n): Total estimated cost. Always expands the lowest f(n) node via Min-Heap.
+         * This implementation also adds a 'Turn Penalty (0.5)' to prioritize straight corridors over zig-zags.
+         * =========================================================================
+         */
+        class PathFinder {
+            static findPath(start, end, map, dynamicObs = []) {
+                let open = new MinHeap(); open.insert(new Node(start.x, start.y));
+                let closed = new Set(), gScore = new Map(); gScore.set(`${start.x},${start.y}`, 0);
+
+                let obsSet = new Set();
+                dynamicObs.forEach(o => { if (o.x !== end.x || o.y !== end.y) obsSet.add(`${o.x},${o.y}`); });
+
+                while (open.size() > 0) {
+                    let curr = open.extractMin(), key = `${curr.x},${curr.y}`;
+                    if (curr.x === end.x && curr.y === end.y) {
+                        let path = []; while (curr) { path.push({ x: curr.x, y: curr.y }); curr = curr.parent; }
+                        return { path: path.reverse(), ops: open.ops, distance: gScore.get(key) };
+                    }
+                    if (closed.has(key)) continue; closed.add(key);
+
+                    [[0, 1], [0, -1], [1, 0], [-1, 0]].forEach(d => {
+                        let nx = curr.x + d[0], ny = curr.y + d[1], nKey = `${nx},${ny}`;
+                        if (nx < 0 || nx >= GRID_W || ny < 0 || ny >= GRID_H || map[ny][nx] !== 0 || closed.has(nKey)) return;
+                        if (obsSet.has(nKey)) return;
+                        let g = curr.g + 1;
+                        if (curr.parent && (curr.x - curr.parent.x !== d[0] || curr.y - curr.parent.y !== d[1])) g += 0.5;
+                        if (!gScore.has(nKey) || g < gScore.get(nKey)) {
+                            gScore.set(nKey, g);
+                            let n = new Node(nx, ny, curr); n.g = g; n.h = Math.abs(nx - end.x) + Math.abs(ny - end.y); n.f = g + n.h;
+                            open.insert(n);
+                        }
+                    });
+                }
+                return { path: [], ops: open.ops, distance: 9999 };
+            }
+        }
+
+        /**
+         * =========================================================================
+         * 通道互斥鎖管理器 (Corridor Mutex Lock Manager)
+         * Corridor Mutex Lock Manager
+         * =========================================================================
+         * 【繁體中文說明】：
+         * 狹窄通道就像單線通行的鐵路橋，同一時間絕對不能有兩輛車在裡面，否則會對撞死鎖。
+         * 互斥鎖就像紅綠燈與通行令牌：
+         * - 進入通道前先「申請鎖 (acquire)」，如果通道有別人就必須在外面等。
+         * - 離開通道後立刻「釋放鎖 (release)」，讓下一輛車進來。
+         *
+         * [US English Description]:
+         * A narrow corridor is like a single-track bridge: two oncoming vehicles will deadlock.
+         * The mutex acts like an automated traffic signal and token system:
+         * - 'acquire': Grants exclusive access before entry. If locked by another AGV, caller must wait outside.
+         * - 'release': Frees the lock once the vehicle departs, allowing the next vehicle to proceed safely.
+         * =========================================================================
+         */
+        class MutexManager {
+            constructor() { this.locks = new Map(); }
+            register(id) { if (!this.locks.has(id)) this.locks.set(id, null); }
+            isLocked(id, me) { let o = this.locks.get(id); return o !== null && o !== undefined && o !== me; }
+            acquire(id, me) { if (this.locks.get(id) == null) { this.locks.set(id, me); return true; } return this.locks.get(id) === me; }
+            release(id, me) { if (this.locks.get(id) === me) this.locks.set(id, null); }
+        }
+
+        /**
+         * =========================================================================
+         * 最佳化任務派工系統 (Task Dispatcher)
+         * Optimized Task Dispatcher
+         * =========================================================================
+         * 【繁體中文說明】：
+         * 當有貨物需要搬運時，系統該派哪台車？
+         * 評估公式：總成本 = 距離成本 + 電量懲罰 ( (100 - 電量) * 2 )
+         * 就像外送平台一樣，優先找「離店家最近」且「手機快充飽」的外送員，達到全域最佳效率！
+         *
+         * [US English Description]:
+         * Decides which idle AGV should be dispatched to handle a new transportation order.
+         * Cost Matrix: Total Cost = Distance Cost + Battery Penalty ((100 - Battery) * 2)
+         * Similar to rideshare/food delivery matching: prioritizes the closest vehicle with ample battery.
+         * =========================================================================
+         */
+        class Dispatcher {
+            static findBestAGV(agvs, pickup, map, dynamicObs) {
+                let bestAGV = null;
+                let minCost = Infinity;
+                agvs.forEach(agv => {
+                    if (agv.state !== 'IDLE' && agv.state !== 'MOVING_TO_REST' && agv.state !== 'CHARGING') return;
+                    let pathToPickup = PathFinder.findPath({ x: agv.x, y: agv.y }, pickup, map, dynamicObs);
+                    if (pathToPickup.path.length === 0 && (agv.x !== pickup.x || agv.y !== pickup.y)) return;
+
+                    let distCost = pathToPickup.distance;
+                    let batteryPenalty = (100 - agv.battery) * 2;
+                    let totalCost = distCost + batteryPenalty;
+
+                    if (totalCost < minCost) { minCost = totalCost; bestAGV = agv; }
+                });
+                return bestAGV;
+            }
+        }
+
+        /**
+         * =========================================================================
+         * AGV 自走搬運車實體與狀態機 (AGV Vehicle Entity & State Machine)
+         * AGV Vehicle Entity & State Machine
+         * =========================================================================
+         * 【繁體中文說明】：
+         * 負責模擬單一車輛的生命週期與行為邏輯：
+         * - 狀態機流轉：閒置 (IDLE) -> 去取貨 (TO_PICKUP) -> 裝貨 (LOADING) -> 去送貨 (TO_DELIVERY) -> 卸貨 (UNLOADING)
+         * - 智慧避讓：發現通道被別人佔用時，使用 BFS 在半徑 3 格內搜尋空位主動避讓（Yielding）。
+         * - 耐心重規劃：若被路障擋住超時，自動啟動 A* 動態繞道（Replanning）。
+         * - 安全退位：裝卸貨或充飽電完成後，自動移出站點（Safe Vacate），不霸佔月台。
+         *
+         * [US English Description]:
+         * Manages the lifecycle and autonomous navigation of an Automated Guided Vehicle:
+         * - State Machine: IDLE -> TO_PICKUP -> LOADING -> TO_DELIVERY -> UNLOADING.
+         * - Smart Yielding: If destination corridor is locked, uses BFS to find a safe wayside spot to yield.
+         * - Dynamic Replanning: If blocked beyond its patience timer, triggers dynamic A* recalculation.
+         * - Safe Vacate: Once cargo handling or charging is complete, automatically moves to an open waiting zone.
+         * =========================================================================
+         */
+        class AGV {
+            constructor(id, x, y, color) {
+                this.id = id; this.x = x; this.y = y; this.visualX = x; this.visualY = y; this.color = color;
+                this.path = []; this.pathIndex = 0; this.state = 'IDLE';
+                this.target = null; this.yieldAisle = -1; this.waitingText = ''; this.waitTimer = 0;
+                this.taskPhase = 'IDLE'; this.taskTargetName = '';
+                this.pickupName = ''; this.deliveryName = '';
+                this.angle = 0; this.patience = 60 + Math.random() * 60; this.battery = 100;
+                this.currentTaskId = null;
+            }
+
+            reset() {
+                this.path = []; this.pathIndex = 0; this.state = 'IDLE';
+                this.target = null; this.yieldAisle = -1; this.waitingText = ''; this.waitTimer = 0;
+                this.taskPhase = 'IDLE'; this.taskTargetName = '';
+                this.pickupName = ''; this.deliveryName = '';
+                this.currentTaskId = null;
+
+                // Force release locks
+                let aid = AISLE_MAP[Math.round(this.y)][Math.round(this.x)];
+                if (aid > 0) sim.mutex.release(aid, this.id);
+            }
+
+            setTask(taskId, pickup, delivery) {
+                this.currentTaskId = taskId;
+                this.pickupName = pickup; this.deliveryName = delivery;
+                let p = STATIONS[pickup];
+                if (!p) return;
+                this.taskPhase = 'TO_PICKUP';
+                this.taskTargetName = pickup;
+                this.target = { x: p.x, y: p.y };
+                this.calculatePath();
+            }
+
+            goToRest() {
+                let restTarget = null, minD = Infinity;
+                let candidates = [];
+                for (let x = 1; x < GRID_W - 1; x += 2) {
+                    if (MAP[0][x] === 0 && AISLE_MAP[0][x] === 0) candidates.push({ x: x, y: 0 });
+                    if (MAP[GRID_H - 1][x] === 0 && AISLE_MAP[GRID_H - 1][x] === 0) candidates.push({ x: x, y: GRID_H - 1 });
+                }
+                candidates.sort(() => Math.random() - 0.5);
+
+                for (let cand of candidates) {
+                    let occupied = sim.agvs.some(a => a.id !== this.id && a.target && a.target.x === cand.x && a.target.y === cand.y);
+                    if (occupied) continue;
+                    if (Object.values(STATIONS).some(s => s.x === cand.x && s.y === cand.y)) continue;
+                    let d = Math.abs(this.x - cand.x) + Math.abs(this.y - cand.y);
+                    if (d < minD) { minD = d; restTarget = cand; }
+                }
+
+                if (restTarget) {
+                    if (restTarget.x === this.x && restTarget.y === this.y) {
+                        this.state = 'IDLE';
+                    } else {
+                        this.target = restTarget;
+                        this.state = 'MOVING_TO_REST';
+                        this.calculatePath();
+                    }
+                } else {
+                    this.state = 'IDLE';
+                }
+            }
+
+            goToCharge() {
+                let restTarget = null, minD = Infinity;
+                let candidates = CHARGERS.map(c => ({ x: c.x, y: c.y }));
+
+                for (let cand of candidates) {
+                    let occupied = sim.agvs.some(a => a.id !== this.id && a.target && a.target.x === cand.x && a.target.y === cand.y);
+                    if (occupied) continue;
+                    let d = Math.abs(this.x - cand.x) + Math.abs(this.y - cand.y);
+                    if (d < minD) { minD = d; restTarget = cand; }
+                }
+
+                if (restTarget) {
+                    if (restTarget.x === this.x && restTarget.y === this.y) {
+                        this.state = 'CHARGING';
+                    } else {
+                        this.target = restTarget;
+                        this.state = 'MOVING_TO_CHARGE';
+                        this.calculatePath();
+                    }
+                } else {
+                    this.vacateStation();
+                }
+            }
+
+            vacateStation() {
+                // 安全退位機制：裝卸貨或充飽電完成後，搜尋半徑 2 格外之空位移出站點 (Safe Vacate: Move off station to an open spot at distance >= 2)
+                if (Object.values(STATIONS).some(s => s.x === this.x && s.y === this.y) || CHARGERS.some(c => c.x === this.x && c.y === this.y)) {
+                    let queue = [{ x: this.x, y: this.y, dist: 0 }];
+                    let visited = new Set([`${this.x},${this.y}`]);
+
+                    while (queue.length) {
+                        let curr = queue.shift();
+                        // Find valid spot >= 2 distance
+                        if (curr.dist >= 2 && MAP[curr.y][curr.x] === 0 && AISLE_MAP[curr.y][curr.x] === 0) {
+                            let occupied = sim.agvs.some(a => a.id !== this.id && a.target && a.target.x === curr.x && a.target.y === curr.y);
+                            if (!occupied && !Object.values(STATIONS).some(s => s.x === curr.x && s.y === curr.y) && !CHARGERS.some(c => c.x === curr.x && c.y === curr.y)) {
+                                this.target = { x: curr.x, y: curr.y };
+                                this.state = 'MOVING_TO_REST';
+                                this.calculatePath();
+                                return;
+                            }
+                        }
+                        if (curr.dist < 4) { // Limit search radius
+                            [[0, 1], [0, -1], [1, 0], [-1, 0]].forEach(d => {
+                                let nx = curr.x + d[0], ny = curr.y + d[1];
+                                if (nx >= 0 && nx < GRID_W && ny >= 0 && ny < GRID_H && !visited.has(`${nx},${ny}`)) {
+                                    visited.add(`${nx},${ny}`); queue.push({ x: nx, y: ny, dist: curr.dist + 1 });
+                                }
+                            });
+                        }
+                    }
+                }
+                this.state = 'IDLE';
+            }
+
+            calculatePath(dynamicObs = []) {
+                let allObs = [...dynamicObs];
+                if (this.state === 'MOVING' || this.state === 'MOVING_TO_REST' || this.state === 'MOVING_TO_CHARGE') {
+                    sim.agvs.forEach(a => {
+                        if (a.id !== this.id && a.state === 'IDLE') allObs.push({ x: a.x, y: a.y });
+                    });
+                }
+                const res = PathFinder.findPath({ x: this.x, y: this.y }, this.target, MAP, allObs);
+
+                if (res.path.length === 0 && (this.x !== this.target.x || this.y !== this.target.y)) {
+                    this.state = 'BLOCKED';
+                    this.waitingText = '🚫 路徑受阻';
+                    this.path = [];
+                    setTimeout(() => this.calculatePath(dynamicObs), 1000);
+                    return;
+                }
+                this.path = res.path;
+                this.pathIndex = 0;
+                if (this.state !== 'MOVING_TO_REST' && this.state !== 'MOVING_TO_CHARGE') this.state = 'MOVING';
+                this.waitTimer = 0;
+                let h = document.getElementById('heap-stats'); if (h) h.innerText = parseInt(h.innerText) + res.ops;
+                let pn = document.getElementById('path-stats'); if (pn) pn.innerText = res.path.length;
+            }
+
+            findYieldNode(badNode, allAGVs) {
+                let queue = [{ x: this.x, y: this.y, dist: 0 }];
+                let visited = new Set([`${this.x},${this.y}`]);
+                while (queue.length > 0) {
+                    let curr = queue.shift();
+                    if (curr.dist > 3) break;
+                    if (curr.dist > 0 && !(curr.x === badNode.x && curr.y === badNode.y)) {
+                        let occupied = allAGVs.some(a => a.id !== this.id && Math.abs(a.visualX - curr.x) < 0.5 && Math.abs(a.visualY - curr.y) < 0.5);
+                        if (!occupied && AISLE_MAP[curr.y][curr.x] === 0 && MAP[curr.y][curr.x] === 0) return { x: curr.x, y: curr.y };
+                    }
+                    [[0, 1], [0, -1], [1, 0], [-1, 0]].forEach(d => {
+                        let nx = curr.x + d[0], ny = curr.y + d[1];
+                        if (nx >= 0 && nx < GRID_W && ny >= 0 && ny < GRID_H && !visited.has(`${nx},${ny}`)) {
+                            visited.add(`${nx},${ny}`); queue.push({ x: nx, y: ny, dist: curr.dist + 1 });
+                        }
+                    });
+                }
+                return null;
+            }
+
+            update(mutex, allAGVs, speedMultiplier) {
+                if (this.state === 'BLOCKED') return;
+
+                if (this.state === 'CHARGING') {
+                    this.battery += 0.5 * speedMultiplier;
+                    if (this.battery >= 100) {
+                        this.battery = 100;
+                        this.state = 'IDLE';
+                        this.vacateStation();
+                    }
+                    return;
+                }
+
+                if (this.state !== 'IDLE' && this.state !== 'MOVING_TO_REST' && this.state !== 'CHARGING') {
+                    this.battery -= 0.01 * speedMultiplier;
+                    if (this.battery < 0) this.battery = 0;
+                }
+
+                if (this.battery < 30 && this.state !== 'CHARGING' && this.state !== 'MOVING_TO_CHARGE' && this.taskPhase === 'IDLE') {
+                    this.goToCharge();
+                    return;
+                }
+
+                if (this.state === 'IDLE') return;
+                if (this.state === 'LOADING' || this.state === 'UNLOADING') return;
+
+                if (this.state === 'YIELDING') {
+                    if (!mutex.isLocked(this.yieldAisle, this.id)) {
+                        log(`AGV #${this.id} 避讓結束`, 'text-purple-400', '通道解鎖，恢復行駛');
+                        this.state = 'MOVING'; this.calculatePath();
+                    } else { this.waitingText = '避讓中'; }
+                    return;
+                }
+
+                if (this.pathIndex >= this.path.length - 1) {
+                    if (this.state === 'MOVING_TO_REST') {
+                        // 到達休息區時釋放可能持有的通道鎖 (Release corridor lock upon reaching rest spot if applicable)
+                        let aid = AISLE_MAP[this.y][this.x];
+                        if (aid > 0) mutex.release(aid, this.id);
+                        this.state = 'IDLE';
+                        sim.updateUI();
+                    } else if (this.state === 'MOVING_TO_CHARGE') {
+                        let aid = AISLE_MAP[this.y][this.x];
+                        if (aid > 0) mutex.release(aid, this.id);
+                        this.state = 'CHARGING';
+                        sim.updateUI();
+                    } else if (this.taskPhase === 'TO_PICKUP') {
+                        this.state = 'LOADING';
+                        this.waitingText = '📦 裝貨中...';
+                        // 裝貨期間持續持有通道鎖，避免他車駛入對撞 (Maintain corridor lock during loading to prevent collisions)
+                        setTimeout(() => {
+                            this.taskPhase = 'TO_DELIVERY';
+                            this.taskTargetName = this.deliveryName;
+                            let d = STATIONS[this.deliveryName];
+                            if (d) {
+                                this.target = { x: d.x, y: d.y };
+                                this.waitingText = '';
+                                this.calculatePath();
+                            }
+                        }, 500);
+                    } else if (this.taskPhase === 'TO_DELIVERY') {
+                        this.state = 'UNLOADING';
+                        this.waitingText = '📤 卸貨中...';
+                        log(`AGV #${this.id} 完成`, 'text-emerald-400', `${this.pickupName}->${this.deliveryName}`);
+
+                        let finishedTaskId = this.currentTaskId;
+                        this.currentTaskId = null;
+                        this.pickupName = ''; this.deliveryName = '';
+
+                        // 卸貨期間維持鎖定，待移出站點時再行釋放 (Keep corridor locked until vacating begins)
+                        setTimeout(() => {
+                            this.waitingText = '';
+                            this.taskPhase = 'IDLE';
+                            sim.completeTask(finishedTaskId);
+                            this.vacateStation(); // Move off -> Lock will be released in normal move update
+                            sim.updateUI();
+                        }, 500);
+                    }
+                    return;
+                }
+
+                let next = this.path[this.pathIndex + 1];
+                let curr = this.path[this.pathIndex];
+                let nextAisle = AISLE_MAP[next.y][next.x];
+                let currAisle = AISLE_MAP[curr.y][curr.x];
+
+                if (nextAisle > 0 && nextAisle !== currAisle) {
+                    if (!mutex.acquire(nextAisle, this.id)) {
+                        if (this.state !== 'MOVING_TO_YIELD') {
+                            let yn = this.findYieldNode(next, allAGVs);
+                            if (yn) {
+                                this.path = [curr, yn]; this.pathIndex = 0;
+                                this.state = 'MOVING_TO_YIELD'; this.yieldAisle = nextAisle;
+                                this.waitingText = '';
+                                log(`AGV #${this.id} 避讓`, 'text-yellow-400', `通道 ${nextAisle} 忙碌`);
+                                sim.incrementYieldCount();
+                            } else { this.waitingText = '等待'; }
+                        }
+                        return;
+                    }
+                }
+                if (currAisle > 0 && nextAisle !== currAisle) mutex.release(currAisle, this.id);
+
+                let blocked = allAGVs.some(a => a.id !== this.id && Math.abs(a.visualX - next.x) < 0.8 && Math.abs(a.visualY - next.y) < 0.8);
+                if (blocked) {
+                    this.waitingText = '防撞';
+                    this.waitTimer++;
+                    if (this.waitTimer > this.patience) {
+                        let obs = allAGVs.filter(a => a.id !== this.id).map(a => ({ x: a.x, y: a.y }));
+                        this.calculatePath(obs);
+                        this.waitTimer = 0;
+                        sim.incrementYieldCount();
+                    }
+                    return;
+                } else { this.waitTimer = 0; }
+
+                let dx = next.x - this.visualX;
+                let dy = next.y - this.visualY;
+                if (Math.abs(dx) > 0.001 || Math.abs(dy) > 0.001) this.angle = Math.atan2(dy, dx);
+                let speed = 0.08 * speedMultiplier;
+
+                // Linear Smooth Movement
+                let dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist <= speed) {
+                    this.visualX = next.x; this.visualY = next.y;
+                    this.x = next.x; this.y = next.y;
+                    if (this.state === 'MOVING_TO_YIELD') this.state = 'YIELDING'; else this.pathIndex++;
+                    this.waitingText = '';
+                } else {
+                    this.visualX += (dx / dist) * speed;
+                    this.visualY += (dy / dist) * speed;
+                }
+            }
+        }
+
+        // --- 6. SYSTEM ---
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const logContainer = document.getElementById('log-content');
+        const ticker = document.getElementById('system-ticker');
+
+        function log(title, colorClass, detail = '') {
+            let time = new Date().toLocaleTimeString('en-GB', { hour12: false });
+            let html = `
+            <div class="log-item">
+                <span class="log-time">${time}</span>
+                <div class="flex-1">
+                    <span class="font-bold ${colorClass}">${title}</span>
+                    ${detail ? `<span class="text-slate-500 ml-1">- ${detail}</span>` : ''}
+                </div>
+            </div>`;
+            logContainer.insertAdjacentHTML('afterbegin', html);
+            if (logContainer.children.length > 50) logContainer.lastChild.remove();
+        }
+
+        const sim = {
+            agvs: [], mutex: new MutexManager(), running: false, analyzed: false,
+            toolMode: 'drag', dragTarget: null, speedMultiplier: 1.0, activeTab: 'controls',
+            taskQueue: [], tasks: {}, taskIdCounter: 1, autoMode: true, history: [], // AutoMode Default True
+            userDangerStart: null, userDangerIdCounter: 1000, yieldCount: 0, taskCount: 0,
+
+            init: () => {
+                sim.generateWarehouseMap();
+                sim.initInteraction();
+                // Add 3 AGVs initially
+                for (let i = 0; i < 3; i++) sim.addRandomAGV(true);
+                sim.updateTaskBoard();
+                sim.updateFleetTable();
+                sim.setTab('controls');
+                sim.initCarousel();
+                sim.draw();
+                setInterval(sim.dispatchLoop, 1000);
+                setInterval(sim.autoGenLoop, 2000);
+
+                // Set initial auto-gen toggle state UI
+                document.getElementById('auto-gen-knob').classList.add('translate-x-5');
+                document.getElementById('btn-auto-gen').classList.replace('bg-slate-600', 'bg-emerald-500');
+            },
+
+            // --- CAROUSEL ---
+            carouselData: [
+                { title: 'BFS 區域識別', desc: '利用廣度優先搜尋自動掃描地圖，識別並標記狹窄通道與互斥鎖區域', icon: '🔍', color: '#a855f7' },
+                { title: 'Min-Heap A*', desc: '結合最小堆積優化 A* 演算法，實現 O(log N) 高效路徑規劃', icon: '🎯', color: '#3b82f6' },
+                { title: '最佳化派工', desc: '建立成本矩陣，綜合評估距離、電量與狀態，計算全域最佳任務指派', icon: '⚡', color: '#10b981' },
+                { title: '智慧避讓', desc: '當 AGV 遭遇通道鎖定時，自動搜尋鄰近空位進行避讓，解除死鎖', icon: '🚦', color: '#f59e0b' }
+            ],
+            currentSlide: 0,
+            initCarousel: () => {
+                const slidesContainer = document.getElementById('carousel-slides');
+                const dotsContainer = document.getElementById('carousel-dots');
+
+                
+
+                sim.carouselData.forEach((item, index) => {
+                    
+                    // Create Slide
+                    const slide = document.createElement('div');
+                    slide.className = `carousel-slide ${index === 0 ? 'active' : ''}`;
+                    slide.setAttribute('data-index', index); // Add data attribute for debugging
+                    slide.setAttribute('data-title', item.title); // Add title for debugging
+                    slide.innerHTML = `
+                        <div class="flex items-center gap-4 w-full">
+                            <div class="text-4xl" style="filter: drop-shadow(0 2px 8px ${item.color}40);">${item.icon}</div>
+                            <div class="flex-1">
+                                <div class="text-sm font-bold mb-1" style="color: ${item.color};">${item.title}</div>
+                                <div class="text-[11px] text-slate-300 leading-relaxed">${item.desc}</div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    slidesContainer.appendChild(slide);
+
+                    // Create Dot
+                    const dot = document.createElement('div');
+                    dot.className = `carousel-dot ${index === 0 ? 'active' : ''}`;
+                    dot.onclick = () => sim.setSlide(index);
+                    dotsContainer.appendChild(dot);
+                });
+
+                // Auto rotate
+                setInterval(() => {
+                    sim.setSlide((sim.currentSlide + 1) % sim.carouselData.length);
+                }, 5000);
+            },
+            setSlide: (index) => {
+                
+                sim.currentSlide = index;
+                const slides = document.querySelectorAll('.carousel-slide');
+                const dots = document.querySelectorAll('.carousel-dot');
+
+                
+
+                slides.forEach((s, i) => s.classList.toggle('active', i === index));
+                dots.forEach((d, i) => d.classList.toggle('active', i === index));
+            },
+
+            // --- ALGORITHM MODAL ---
+            algoDetails: [
+                {
+                    title: 'BFS 區域識別',
+                    subtitle: 'Breadth-First Search Region Detection',
+                    icon: '🔍',
+                    color: '#a855f7',
+                    description: '利用廣度優先搜尋 (BFS) 演算法，自動掃描地圖中的所有格子，識別出被貨架夾成的狹窄通道，並將每個通道標記為獨立的互斥鎖區域。當 AGV 進入通道時會鎖定該區域，其他 AGV 必須等待或繞道。',
+                    svg: `<svg viewBox="0 0 600 300" xmlns="http://www.w3.org/2000/svg" class="w-full" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+                        <defs>
+                            <linearGradient id="bfsGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#a855f7;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#6366f1;stop-opacity:1" />
+                            </linearGradient>
+                            <filter id="glow">
+                                <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                                <feMerge>
+                                    <feMergeNode in="coloredBlur"/>
+                                    <feMergeNode in="SourceGraphic"/>
+                                </feMerge>
+                            </filter>
+                        </defs>
+
+                        <!-- Title -->
+                        <text x="300" y="30" text-anchor="middle" font-family="Inter" font-size="20" font-weight="bold" fill="#a855f7">BFS 區域掃描演示</text>
+                        <text x="300" y="50" text-anchor="middle" font-family="Inter" font-size="12" fill="#94a3b8">從起點開始，逐層向外擴散掃描</text>
+
+                        <!-- Map Grid (Shelves) -->
+                        <rect x="100" y="80" width="40" height="160" fill="#334155" opacity="0.6" rx="4"/>
+                        <rect x="160" y="80" width="40" height="160" fill="#334155" opacity="0.6" rx="4"/>
+                        <rect x="280" y="80" width="40" height="160" fill="#334155" opacity="0.6" rx="4"/>
+                        <rect x="340" y="80" width="40" height="160" fill="#334155" opacity="0.6" rx="4"/>
+                        <rect x="460" y="80" width="40" height="160" fill="#334155" opacity="0.6" rx="4"/>
+
+                        <!-- Aisle 1 (between shelves 1&2) -->
+                        <g id="aisle1">
+                            <rect x="210" y="90" width="18" height="18" fill="#a855f7" opacity="0" rx="2">
+                                <animate attributeName="opacity" values="0;0.3;0.6;0.9" dur="4s" begin="0s" fill="freeze"/>
+                            </rect>
+                            <rect x="210" y="118" width="18" height="18" fill="#a855f7" opacity="0" rx="2">
+                                <animate attributeName="opacity" values="0;0.3;0.6;0.9" dur="4s" begin="0.3s" fill="freeze"/>
+                            </rect>
+                            <rect x="210" y="146" width="18" height="18" fill="#a855f7" opacity="0" rx="2">
+                                <animate attributeName="opacity" values="0;0.3;0.6;0.9" dur="4s" begin="0.6s" fill="freeze"/>
+                            </rect>
+                            <rect x="210" y="174" width="18" height="18" fill="#a855f7" opacity="0" rx="2">
+                                <animate attributeName="opacity" values="0;0.3;0.6;0.9" dur="4s" begin="0.9s" fill="freeze"/>
+                            </rect>
+                            <rect x="210" y="202" width="18" height="18" fill="#a855f7" opacity="0" rx="2">
+                                <animate attributeName="opacity" values="0;0.3;0.6;0.9" dur="4s" begin="1.2s" fill="freeze"/>
+                            </rect>
+                            <text x="238" y="168" font-family="Inter" font-size="14" font-weight="bold" fill="#a855f7" opacity="0">
+                                ID: 1
+                                <animate attributeName="opacity" values="0;1" dur="1s" begin="1.5s" fill="freeze"/>
+                            </text>
+                        </g>
+
+                        <!-- Aisle 2 (between shelves 3&4) -->
+                        <g id="aisle2">
+                            <rect x="390" y="90" width="18" height="18" fill="#6366f1" opacity="0" rx="2">
+                                <animate attributeName="opacity" values="0;0.3;0.6;0.9" dur="4s" begin="2s" fill="freeze"/>
+                            </rect>
+                            <rect x="390" y="118" width="18" height="18" fill="#6366f1" opacity="0" rx="2">
+                                <animate attributeName="opacity" values="0;0.3;0.6;0.9" dur="4s" begin="2.3s" fill="freeze"/>
+                            </rect>
+                            <rect x="390" y="146" width="18" height="18" fill="#6366f1" opacity="0" rx="2">
+                                <animate attributeName="opacity" values="0;0.3;0.6;0.9" dur="4s" begin="2.6s" fill="freeze"/>
+                            </rect>
+                            <rect x="390" y="174" width="18" height="18" fill="#6366f1" opacity="0" rx="2">
+                                <animate attributeName="opacity" values="0;0.3;0.6;0.9" dur="4s" begin="2.9s" fill="freeze"/>
+                            </rect>
+                            <rect x="390" y="202" width="18" height="18" fill="#6366f1" opacity="0" rx="2">
+                                <animate attributeName="opacity" values="0;0.3;0.6;0.9" dur="4s" begin="3.2s" fill="freeze"/>
+                            </rect>
+                            <text x="418" y="168" font-family="Inter" font-size="14" font-weight="bold" fill="#6366f1" opacity="0">
+                                ID: 2
+                                <animate attributeName="opacity" values="0;1" dur="1s" begin="3.5s" fill="freeze"/>
+                            </text>
+                        </g>
+
+                        <!-- Scanning wave effect -->
+                        <circle cx="219" cy="100" r="0" fill="none" stroke="#a855f7" stroke-width="2" opacity="0.6">
+                            <animate attributeName="r" values="0;30;60;90" dur="4s" begin="0s" fill="freeze"/>
+                            <animate attributeName="opacity" values="0.8;0.4;0.2;0" dur="4s" begin="0s" fill="freeze"/>
+                        </circle>
+                        <circle cx="399" cy="100" r="0" fill="none" stroke="#6366f1" stroke-width="2" opacity="0.6">
+                            <animate attributeName="r" values="0;30;60;90" dur="4s" begin="2s" fill="freeze"/>
+                            <animate attributeName="opacity" values="0.8;0.4;0.2;0" dur="4s" begin="2s" fill="freeze"/>
+                        </circle>
+
+                        <!-- Legend -->
+                        <g transform="translate(50, 260)">
+                            <rect x="0" y="0" width="12" height="12" fill="#a855f7" opacity="0.7" rx="2"/>
+                            <text x="18" y="10" font-family="Inter" font-size="11" fill="#cbd5e1">通道區域 1</text>
+                            <rect x="120" y="0" width="12" height="12" fill="#6366f1" opacity="0.7" rx="2"/>
+                            <text x="138" y="10" font-family="Inter" font-size="11" fill="#cbd5e1">通道區域 2</text>
+                            <rect x="240" y="0" width="12" height="12" fill="#334155" opacity="0.6" rx="2"/>
+                            <text x="258" y="10" font-family="Inter" font-size="11" fill="#cbd5e1">貨架</text>
+                        </g>
+                    </svg>`,
+                    features: ['時間複雜度: O(V+E)', '空間複雜度: O(V)', '支援動態地圖更新', '自動分配區域 ID'],
+                    steps: ['1. 從每個空白格子開始 BFS 掃描', '2. 檢測四周是否被貨架包圍', '3. 將同一通道的格子標記為相同 ID', '4. 建立互斥鎖對應表']
+                },
+                {
+                    title: 'Min-Heap A* 尋路',
+                    subtitle: 'Min-Heap Optimized A* Pathfinding',
+                    icon: '🎯',
+                    color: '#3b82f6',
+                    description: 'A* 演算法結合 Min-Heap（最小堆積）資料結構，實現高效的路徑規劃。使用啟發式函數 h(n) = 曼哈頓距離估算到終點的成本，並透過堆積操作在 O(log N) 時間內取得最低成本節點。',
+                    svg: `<svg viewBox="0 0 600 300" xmlns="http://www.w3.org/2000/svg" class="w-full" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+                        <!-- Title -->
+                        <text x="300" y="30" text-anchor="middle" font-family="Inter" font-size="20" font-weight="bold" fill="#3b82f6">A* 尋路演算法演示</text>
+                        <text x="300" y="50" text-anchor="middle" font-family="Inter" font-size="12" fill="#94a3b8">從起點 S 到終點 E 的最短路徑搜尋</text>
+
+                        <!-- Grid background -->
+                        <g opacity="0.1">
+                            ${[...Array(10)].map((_, i) => `<line x1="${100 + i * 40}" y1="80" x2="${100 + i * 40}" y2="240" stroke="#64748b" stroke-width="1"/>`).join('')}
+                            ${[...Array(5)].map((_, i) => `<line x1="100" y1="${80 + i * 40}" x2="500" y2="${80 + i * 40}" stroke="#64748b" stroke-width="1"/>`).join('')}
+                        </g>
+
+                        <!-- Obstacles -->
+                        <rect x="220" y="120" width="40" height="40" fill="#334155" opacity="0.6" rx="4"/>
+                        <rect x="260" y="160" width="40" height="40" fill="#334155" opacity="0.6" rx="4"/>
+                        <rect x="340" y="120" width="40" height="40" fill="#334155" opacity="0.6" rx="4"/>
+
+                        <!-- Explored nodes (expanding from start) -->
+                        <circle cx="140" cy="100" r="8" fill="#3b82f6" opacity="0">
+                            <animate attributeName="opacity" values="0;0.3" dur="0.5s" begin="0s" fill="freeze"/>
+                        </circle>
+                        <circle cx="180" cy="100" r="8" fill="#3b82f6" opacity="0">
+                            <animate attributeName="opacity" values="0;0.3" dur="0.5s" begin="0.3s" fill="freeze"/>
+                        </circle>
+                        <circle cx="180" cy="140" r="8" fill="#3b82f6" opacity="0">
+                            <animate attributeName="opacity" values="0;0.3" dur="0.5s" begin="0.6s" fill="freeze"/>
+                        </circle>
+                        <circle cx="220" cy="180" r="8" fill="#3b82f6" opacity="0">
+                            <animate attributeName="opacity" values="0;0.3" dur="0.5s" begin="0.9s" fill="freeze"/>
+                        </circle>
+                        <circle cx="260" cy="100" r="8" fill="#3b82f6" opacity="0">
+                            <animate attributeName="opacity" values="0;0.3" dur="0.5s" begin="1.2s" fill="freeze"/>
+                        </circle>
+                        <circle cx="300" cy="100" r="8" fill="#3b82f6" opacity="0">
+                            <animate attributeName="opacity" values="0;0.3" dur="0.5s" begin="1.5s" fill="freeze"/>
+                        </circle>
+                        <circle cx="300" cy="180" r="8" fill="#3b82f6" opacity="0">
+                            <animate attributeName="opacity" values="0;0.3" dur="0.5s" begin="1.8s" fill="freeze"/>
+                        </circle>
+                        <circle cx="340" cy="180" r="8" fill="#3b82f6" opacity="0">
+                            <animate attributeName="opacity" values="0;0.3" dur="0.5s" begin="2.1s" fill="freeze"/>
+                        </circle>
+                        <circle cx="380" cy="180" r="8" fill="#3b82f6" opacity="0">
+                            <animate attributeName="opacity" values="0;0.3" dur="0.5s" begin="2.4s" fill="freeze"/>
+                        </circle>
+                        <circle cx="420" cy="180" r="8" fill="#3b82f6" opacity="0">
+                            <animate attributeName="opacity" values="0;0.3" dur="0.5s" begin="2.7s" fill="freeze"/>
+                        </circle>
+
+                        <!-- Final path (highlighted) -->
+                        <path d="M 100 100 L 140 100 L 180 100 L 180 140 L 220 180 L 260 220 L 300 220 L 340 220 L 380 220 L 420 220 L 460 220"
+                              fill="none" stroke="#10b981" stroke-width="4" opacity="0" stroke-linecap="round" stroke-dasharray="1000" stroke-dashoffset="1000">
+                            <animate attributeName="stroke-dashoffset" from="1000" to="0" dur="2s" begin="3s" fill="freeze"/>
+                            <animate attributeName="opacity" values="0;1" dur="0.3s" begin="3s" fill="freeze"/>
+                        </path>
+
+                        <!-- Path markers on final route -->
+                        ${[[100, 100], [140, 100], [180, 100], [180, 140], [220, 180], [260, 220], [300, 220], [340, 220], [380, 220], [420, 220], [460, 220]].map((pos, i) => `
+                            <circle cx="${pos[0]}" cy="${pos[1]}" r="6" fill="#10b981" opacity="0">
+                                <animate attributeName="opacity" values="0;1" dur="0.3s" begin="${3 + i * 0.15}s" fill="freeze"/>
+                            </circle>
+                        `).join('')}
+
+                        <!-- Start marker S -->
+                        <circle cx="100" cy="100" r="14" fill="#10b981" opacity="0.9"/>
+                        <text x="100" y="105" text-anchor="middle" font-family="Inter" font-size="14" font-weight="bold" fill="white">S</text>
+
+                        <!-- End marker E -->
+                        <circle cx="460" cy="220" r="14" fill="#ef4444" opacity="0.9"/>
+                        <text x="460" y="225" text-anchor="middle" font-family="Inter" font-size="14" font-weight="bold" fill="white">E</text>
+
+                        <!-- Cost labels (f, g, h values) -->
+                        <g opacity="0">
+                            <text x="140" y="90" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#60a5fa">f=5</text>
+                            <text x="180" y="90" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#60a5fa">f=7</text>
+                            <text x="300" y="90" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#60a5fa">f=9</text>
+                            <animate attributeName="opacity" values="0;1" dur="1s" begin="0.5s" fill="freeze"/>
+                        </g>
+
+                        <!-- Legend -->
+                        <g transform="translate(30, 260)">
+                            <circle cx="6" cy="6" r="6" fill="#10b981"/>
+                            <text x="18" y="10" font-family="Inter" font-size="11" fill="#cbd5e1">起點/終點</text>
+                            <circle cx="120" cy="6" r="6" fill="#3b82f6" opacity="0.3"/>
+                            <text x="132" y="10" font-family="Inter" font-size="11" fill="#cbd5e1">已探索節點</text>
+                            <line x1="240" y1="6" x2="280" y2="6" stroke="#10b981" stroke-width="4" stroke-linecap="round"/>
+                            <text x="290" y="10" font-family="Inter" font-size="11" fill="#cbd5e1">最短路徑</text>
+                            <rect x="400" y="0" width="12" height="12" fill="#334155" opacity="0.6" rx="2"/>
+                            <text x="418" y="10" font-family="Inter" font-size="11" fill="#cbd5e1">障礙物</text>
+                        </g>
+                    </svg>`,
+                    features: ['堆積操作: O(log N)', '啟發式搜尋', '保證最短路徑', '支援動態障礙物'],
+                    steps: ['1. 將起點加入 Min-Heap', '2. 取出 f(n) 最小的節點', '3. 展開鄰居節點並計算成本', '4. 重複直到到達終點']
+                },
+                {
+                    title: '最佳化派工系統',
+                    subtitle: 'Optimized Task Dispatching',
+                    icon: '⚡',
+                    color: '#10b981',
+                    description: '當新任務產生時，系統會建立成本矩陣，評估每台 AGV 到每個任務的總成本（距離 + 電量懲罰）。使用貪婪策略或匈牙利演算法找出全域最優的任務分配方案，確保系統效率最大化。',
+                    svg: `<svg viewBox="0 0 600 300" xmlns="http://www.w3.org/2000/svg" class="w-full" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+                        <!-- Title -->
+                        <text x="300" y="30" text-anchor="middle" font-family="Inter" font-size="20" font-weight="bold" fill="#10b981">最佳化派工系統演示</text>
+                        <text x="300" y="50" text-anchor="middle" font-family="Inter" font-size="12" fill="#94a3b8">成本矩陣分析 · 找出全域最優解</text>
+
+                        <!-- AGVs (left side) -->
+                        <g id="agvs">
+                            <rect x="80" y="90" width="60" height="30" rx="6" fill="#3b82f6" opacity="0.8"/>
+                            <text x="110" y="110" text-anchor="middle" font-family="Inter" font-size="12" font-weight="bold" fill="white">AGV-1</text>
+                            <text x="170" y="108" font-family="JetBrains Mono" font-size="9" fill="#94a3b8">⚡85%</text>
+
+                            <rect x="80" y="135" width="60" height="30" rx="6" fill="#3b82f6" opacity="0.7"/>
+                            <text x="110" y="155" text-anchor="middle" font-family="Inter" font-size="12" font-weight="bold" fill="white">AGV-2</text>
+                            <text x="170" y="153" font-family="JetBrains Mono" font-size="9" fill="#94a3b8">⚡65%</text>
+
+                            <rect x="80" y="180" width="60" height="30" rx="6" fill="#3b82f6" opacity="0.6"/>
+                            <text x="110" y="200" text-anchor="middle" font-family="Inter" font-size="12" font-weight="bold" fill="white">AGV-3</text>
+                            <text x="170" y="198" font-family="JetBrains Mono" font-size="9" fill="#94a3b8">⚡45%</text>
+                        </g>
+
+                        <!-- Tasks (right side) -->
+                        <g id="tasks">
+                            <circle cx="480" cy="105" r="18" fill="#fbbf24" opacity="0.9"/>
+                            <text x="480" y="110" text-anchor="middle" font-family="Inter" font-size="12" font-weight="bold" fill="#1e293b">T1</text>
+
+                            <circle cx="480" cy="150" r="18" fill="#fbbf24" opacity="0.8"/>
+                            <text x="480" y="155" text-anchor="middle" font-family="Inter" font-size="12" font-weight="bold" fill="#1e293b">T2</text>
+
+                            <circle cx="480" cy="195" r="18" fill="#fbbf24" opacity="0.7"/>
+                            <text x="480" y="200" text-anchor="middle" font-family="Inter" font-size="12" font-weight="bold" fill="#1e293b">T3</text>
+                        </g>
+
+                        <!-- Cost matrix connections (all possibilities in gray) -->
+                        <g opacity="0">
+                            <line x1="140" y1="105" x2="462" y2="105" stroke="#64748b" stroke-width="1" stroke-dasharray="3,3"/>
+                            <line x1="140" y1="105" x2="462" y2="150" stroke="#64748b" stroke-width="1" stroke-dasharray="3,3"/>
+                            <line x1="140" y1="105" x2="462" y2="195" stroke="#64748b" stroke-width="1" stroke-dasharray="3,3"/>
+                            <line x1="140" y1="150" x2="462" y2="105" stroke="#64748b" stroke-width="1" stroke-dasharray="3,3"/>
+                            <line x1="140" y1="150" x2="462" y2="150" stroke="#64748b" stroke-width="1" stroke-dasharray="3,3"/>
+                            <line x1="140" y1="150" x2="462" y2="195" stroke="#64748b" stroke-width="1" stroke-dasharray="3,3"/>
+                            <line x1="140" y1="195" x2="462" y2="105" stroke="#64748b" stroke-width="1" stroke-dasharray="3,3"/>
+                            <line x1="140" y1="195" x2="462" y2="150" stroke="#64748b" stroke-width="1" stroke-dasharray="3,3"/>
+                            <line x1="140" y1="195" x2="462" y2="195" stroke="#64748b" stroke-width="1" stroke-dasharray="3,3"/>
+                            <animate attributeName="opacity" values="0;0.3" dur="1s" begin="0s" fill="freeze"/>
+                        </g>
+
+                        <!-- Cost labels (showing calculation) -->
+                        <g opacity="0">
+                            <text x="300" y="100" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#94a3b8">5.2</text>
+                            <text x="300" y="145" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#94a3b8">8.7</text>
+                            <text x="300" y="190" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#94a3b8">12.1</text>
+                            <animate attributeName="opacity" values="0;1" dur="1s" begin="1s" fill="freeze"/>
+                        </g>
+
+                        <!-- Optimal assignments (highlighted) -->
+                        <line x1="140" y1="105" x2="462" y2="105" stroke="#10b981" stroke-width="3" opacity="0" stroke-linecap="round">
+                            <animate attributeName="opacity" values="0;1" dur="0.5s" begin="2s" fill="freeze"/>
+                            <animate attributeName="stroke-width" values="3;5;3" dur="1s" begin="2s" repeatCount="indefinite"/>
+                        </line>
+                        <line x1="140" y1="150" x2="462" y2="195" stroke="#10b981" stroke-width="3" opacity="0" stroke-linecap="round">
+                            <animate attributeName="opacity" values="0;1" dur="0.5s" begin="2.3s" fill="freeze"/>
+                        </line>
+                        <line x1="140" y1="195" x2="462" y2="150" stroke="#10b981" stroke-width="3" opacity="0" stroke-linecap="round">
+                            <animate attributeName="opacity" values="0;1" dur="0.5s" begin="2.6s" fill="freeze"/>
+                        </line>
+
+                        <!-- Checkmarks on optimal assignments -->
+                        <text x="300" y="102" text-anchor="middle" font-size="16" fill="#10b981" opacity="0">✓
+                            <animate attributeName="opacity" values="0;1" dur="0.3s" begin="2s" fill="freeze"/>
+                        </text>
+
+                        <!-- Cost comparison panel -->
+                        <g transform="translate(200, 230)">
+                            <rect x="0" y="0" width="200" height="40" fill="#1e293b" opacity="0.8" rx="6"/>
+                            <text x="100" y="16" text-anchor="middle" font-family="Inter" font-size="11" font-weight="bold" fill="#10b981" opacity="0">
+                                總成本最小化
+                                <animate attributeName="opacity" values="0;1" dur="0.5s" begin="2.8s" fill="freeze"/>
+                            </text>
+                            <text x="100" y="32" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#94a3b8" opacity="0">
+                                Total Cost: 5.2 + 7.1 + 8.9 = 21.2
+                                <animate attributeName="opacity" values="0;1" dur="0.5s" begin="3s" fill="freeze"/>
+                            </text>
+                        </g>
+
+                        <!-- Legend -->
+                        <g transform="translate(50, 260)">
+                            <rect x="0" y="0" width="16" height="16" fill="#3b82f6" opacity="0.7" rx="3"/>
+                            <text x="22" y="12" font-family="Inter" font-size="11" fill="#cbd5e1">AGV</text>
+                            <circle cx="90" cy="8" r="8" fill="#fbbf24" opacity="0.8"/>
+                            <text x="104" y="12" font-family="Inter" font-size="11" fill="#cbd5e1">任務</text>
+                            <line x1="155" y1="8" x2="185" y2="8" stroke="#10b981" stroke-width="3" stroke-linecap="round"/>
+                            <text x="192" y="12" font-family="Inter" font-size="11" fill="#cbd5e1">最優配對</text>
+                        </g>
+                    </svg>`,
+                    features: ['多目標優化', '即時成本計算', '電量管理', '負載平衡'],
+                    steps: ['1. 掃描所有 IDLE 狀態的 AGV', '2. 計算到任務的路徑成本', '3. 加入電量懲罰因子', '4. 選擇總成本最低的 AGV']
+                },
+                {
+                    title: '智慧避讓機制',
+                    subtitle: 'Intelligent Deadlock Avoidance',
+                    icon: '🚦',
+                    color: '#f59e0b',
+                    description: '當 AGV 想進入已被佔用的狹窄通道時，系統會使用 BFS 在半徑 3 格內搜尋可用的避讓空位。AGV 會暫時移動到該空位等待，直到通道解鎖。若等待超時（patience 機制），會重新規劃繞道路線。',
+                    svg: `<svg viewBox="0 0 600 300" xmlns="http://www.w3.org/2000/svg" class="w-full" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+                        <!-- Title -->
+                        <text x="300" y="30" text-anchor="middle" font-family="Inter" font-size="20" font-weight="bold" fill="#f59e0b">智慧避讓機制演示</text>
+                        <text x="300" y="50" text-anchor="middle" font-family="Inter" font-size="12" fill="#94a3b8">通道鎖定時自動尋找避讓位置</text>
+
+                        <!-- Narrow passage (shelves) -->
+                        <rect x="180" y="80" width="30" height="180" fill="#334155" opacity="0.6" rx="4"/>
+                        <rect x="390" y="80" width="30" height="180" fill="#334155" opacity="0.6" rx="4"/>
+                        <text x="205" y="75" text-anchor="middle" font-family="Inter" font-size="10" fill="#94a3b8">貨架</text>
+                        <text x="405" y="75" text-anchor="middle" font-family="Inter" font-size="10" fill="#94a3b8">貨架</text>
+
+                        <!-- Aisle area highlight -->
+                        <rect x="210" y="80" width="180" height="180" fill="#f59e0b" opacity="0.05" rx="2"/>
+                        <text x="300" y="95" text-anchor="middle" font-family="Inter" font-size="10" fill="#f59e0b" opacity="0.5">狹窄通道 (互斥區域)</text>
+
+                        <!-- AGV 1 (blocking the aisle) -->
+                        <g id="agv1">
+                            <rect x="265" y="150" width="70" height="35" rx="6" fill="#ef4444" opacity="0.9"/>
+                            <text x="300" y="170" text-anchor="middle" font-family="Inter" font-size="13" font-weight="bold" fill="white">AGV-1</text>
+                            <text x="300" y="185" text-anchor="middle" font-family="Inter" font-size="9" fill="#fecaca">🔒 鎖定中</text>
+                        </g>
+
+                        <!-- AGV 2 (wants to enter, initial position) -->
+                        <g id="agv2-initial" opacity="1">
+                            <rect x="100" y="150" width="70" height="35" rx="6" fill="#fbbf24" opacity="0.8"/>
+                            <text x="135" y="170" text-anchor="middle" font-family="Inter" font-size="13" font-weight="bold" fill="#1e293b">AGV-2</text>
+                            <text x="135" y="185" text-anchor="middle" font-family="Inter" font-size="9" fill="#78350f">等待中</text>
+                            <animate attributeName="opacity" values="1;1;0" dur="4s" begin="0s" fill="freeze"/>
+                        </g>
+
+                        <!-- Blocked path indicator -->
+                        <g opacity="0">
+                            <line x1="170" y1="167.5" x2="265" y2="167.5" stroke="#ef4444" stroke-width="2" stroke-dasharray="5,5"/>
+                            <text x="217" y="160" text-anchor="middle" font-size="20" fill="#ef4444">✕</text>
+                            <text x="217" y="145" text-anchor="middle" font-family="Inter" font-size="10" fill="#ef4444">路徑阻塞</text>
+                            <animate attributeName="opacity" values="0;1;1;0" dur="4s" begin="0s" fill="freeze"/>
+                        </g>
+
+                        <!-- Yield position search (BFS circles) -->
+                        <g id="search-area" opacity="0">
+                            <circle cx="135" cy="120" r="15" fill="none" stroke="#3b82f6" stroke-width="2" stroke-dasharray="3,3">
+                                <animate attributeName="r" values="15;30;45" dur="1s" begin="1.5s" fill="freeze"/>
+                                <animate attributeName="opacity" values="0.6;0.3;0" dur="1s" begin="1.5s" fill="freeze"/>
+                            </circle>
+                            <animate attributeName="opacity" values="0;1" dur="0.3s" begin="1.5s" fill="freeze"/>
+                        </g>
+
+                        <!-- Yield spot (found) -->
+                        <g opacity="0">
+                            <circle cx="135" cy="110" r="20" fill="#10b981" opacity="0.2"/>
+                            <circle cx="135" cy="110" r="12" fill="#10b981" opacity="0.4">
+                                <animate attributeName="r" values="12;16;12" dur="1.5s" begin="2.5s" repeatCount="indefinite"/>
+                            </circle>
+                            <text x="135" y="115" text-anchor="middle" font-family="Inter" font-size="10" font-weight="bold" fill="#10b981">避讓位</text>
+                            <animate attributeName="opacity" values="0;1" dur="0.5s" begin="2.5s" fill="freeze"/>
+                        </g>
+
+                        <!-- Yield path (curved arrow) -->
+                        <g opacity="0">
+                            <path d="M 135 150 Q 100 130 135 110" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-dasharray="400" stroke-dashoffset="400">
+                                <animate attributeName="stroke-dashoffset" from="400" to="0" dur="1s" begin="3s" fill="freeze"/>
+                            </path>
+                            <polygon points="135,108 140,115 130,115" fill="#10b981"/>
+                            <animate attributeName="opacity" values="0;1" dur="0.3s" begin="3s" fill="freeze"/>
+                        </g>
+
+                        <!-- AGV 2 (moved to yield position) -->
+                        <g id="agv2-yield" opacity="0">
+                            <rect x="100" y="92.5" width="70" height="35" rx="6" fill="#10b981" opacity="0.8"/>
+                            <text x="135" y="112.5" text-anchor="middle" font-family="Inter" font-size="13" font-weight="bold" fill="white">AGV-2</text>
+                            <text x="135" y="127.5" text-anchor="middle" font-family="Inter" font-size="9" fill="#d1fae5">✓ 已避讓</text>
+                            <animate attributeName="opacity" values="0;1" dur="0.5s" begin="4s" fill="freeze"/>
+                        </g>
+
+                        <!-- Timeline indicator -->
+                        <g transform="translate(50, 245)">
+                            <text x="0" y="0" font-family="Inter" font-size="11" fill="#94a3b8" opacity="0">
+                                ① 檢測阻塞
+                                <animate attributeName="opacity" values="0;1;1;0.3" keyTimes="0;0.1;0.4;1" dur="5s" begin="0s" fill="freeze"/>
+                            </text>
+                            <text x="130" y="0" font-family="Inter" font-size="11" fill="#94a3b8" opacity="0">
+                                ② BFS 搜尋
+                                <animate attributeName="opacity" values="0;1;1;0.3" keyTimes="0;0.4;0.6;1" dur="5s" begin="0s" fill="freeze"/>
+                            </text>
+                            <text x="260" y="0" font-family="Inter" font-size="11" fill="#94a3b8" opacity="0">
+                                ③ 找到避讓位
+                                <animate attributeName="opacity" values="0;1;1;0.3" keyTimes="0;0.6;0.8;1" dur="5s" begin="0s" fill="freeze"/>
+                            </text>
+                            <text x="390" y="0" font-family="Inter" font-size="11" fill="#10b981" opacity="0">
+                                ④ 移動避讓
+                                <animate attributeName="opacity" values="0;1" dur="0.5s" begin="4s" fill="freeze"/>
+                            </text>
+                        </g>
+
+                        <!-- Legend -->
+                        <g transform="translate(180, 272)">
+                            <rect x="0" y="0" width="16" height="16" fill="#ef4444" opacity="0.7" rx="3"/>
+                            <text x="22" y="12" font-family="Inter" font-size="11" fill="#cbd5e1">阻塞車輛</text>
+                            <circle cx="128" cy="8" r="8" fill="#10b981" opacity="0.6"/>
+                            <text x="142" y="12" font-family="Inter" font-size="11" fill="#cbd5e1">避讓位置</text>
+                        </g>
+                    </svg>`,
+                    features: ['死鎖預防', 'BFS 鄰域搜尋', '耐心機制', '動態重規劃'],
+                    steps: ['1. 檢測通道鎖定狀態', '2. BFS 搜尋鄰近避讓位', '3. 移動至避讓位等待', '4. 超時後重新計算路徑']
+                }
+            ],
+
+            openAlgoModal: (index) => {
+                const modal = document.getElementById('algoModal');
+                const data = sim.algoDetails[index];
+
+                document.getElementById('modal-icon').textContent = data.icon;
+                document.getElementById('modal-icon').style.filter = `drop-shadow(0 4px 16px ${data.color}80)`;
+                document.getElementById('modal-title').textContent = data.title;
+                document.getElementById('modal-title').style.color = data.color;
+                document.getElementById('modal-subtitle').textContent = data.subtitle;
+
+                const content = document.getElementById('modal-content');
+                content.innerHTML = `
+                    <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
+                        <p class="text-slate-300 leading-relaxed text-sm">${data.description}</p>
+                    </div>
+
+                    <div class="bg-slate-900/50 p-6 rounded-xl border border-slate-700">
+                        ${data.svg}
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                            <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                                <i class="fas fa-star" style="color: ${data.color};"></i> 核心特性
+                            </h3>
+                            <ul class="space-y-2">
+                                ${data.features.map(f => `<li class="text-xs text-slate-300 flex items-start gap-2"><i class="fas fa-check-circle mt-0.5" style="color: ${data.color};"></i><span>${f}</span></li>`).join('')}
+                            </ul>
+                        </div>
+                        <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                            <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                                <i class="fas fa-list-ol" style="color: ${data.color};"></i> 執行步驟
+                            </h3>
+                            <ul class="space-y-2">
+                                ${data.steps.map(s => `<li class="text-xs text-slate-300">${s}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            },
+
+            closeAlgoModal: () => {
+                const modal = document.getElementById('algoModal');
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            },
+
+            // --- INTERACTION ---
+            initInteraction: () => {
+                canvas.addEventListener('mousedown', e => sim.handleMouseDown(e));
+                canvas.addEventListener('mousemove', e => sim.handleMouseMove(e));
+                canvas.addEventListener('mouseup', e => sim.handleMouseUp(e));
+                canvas.addEventListener('contextmenu', e => { e.preventDefault(); sim.handleContextMenu(e); });
+            },
+            getGridPos: (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                const mapW = GRID_W * CELL_SIZE; const mapH = GRID_H * CELL_SIZE;
+                const drawScale = Math.min(canvas.width / mapW, canvas.height / mapH) * 0.95;
+                const offX = (canvas.width - mapW * drawScale) / 2; const offY = (canvas.height - mapH * drawScale) / 2;
+                const gx = Math.floor(((e.clientX - rect.left) * scaleX - offX) / drawScale / CELL_SIZE);
+                const gy = Math.floor(((e.clientY - rect.top) * scaleY - offY) / drawScale / CELL_SIZE);
+                return { x: gx, y: gy };
+            },
+            handleMouseDown: (e) => {
+                if (e.button !== 0) return;
+                const pos = sim.getGridPos(e);
+                if (pos.x < 0 || pos.x >= GRID_W || pos.y < 0 || pos.y >= GRID_H) return;
+
+                if (sim.toolMode === 'drag') {
+                    for (let key in STATIONS) if (STATIONS[key].x === pos.x && STATIONS[key].y === pos.y) { sim.dragTarget = key; return; }
+                } else if (sim.toolMode === 'add') {
+                    if (MAP[pos.y][pos.x] === 0 && !Object.values(STATIONS).some(s => s.x === pos.x && s.y === pos.y) && !CHARGERS.some(c => c.x === pos.x && c.y === pos.y)) {
+                        let name = String.fromCharCode(nextStationChar++);
+                        STATIONS[name] = { x: pos.x, y: pos.y, color: '#f59e0b', label: name };
+                        sim.invalidateAnalysis(); sim.updateUI(); sim.draw();
+                    }
+                } else if (sim.toolMode === 'add-charger') {
+                    if (MAP[pos.y][pos.x] === 0 && !CHARGERS.some(c => c.x === pos.x && c.y === pos.y) && !Object.values(STATIONS).some(s => s.x === pos.x && s.y === pos.y)) {
+                        CHARGERS.push({ x: pos.x, y: pos.y });
+                        sim.draw();
+                    }
+                } else if (sim.toolMode === 'draw-danger') {
+                    sim.userDangerStart = pos;
+                }
+            },
+            handleMouseMove: (e) => {
+                if (sim.dragTarget && sim.toolMode === 'drag') {
+                    const pos = sim.getGridPos(e);
+                    if (pos.x >= 0 && pos.x < GRID_W && pos.y >= 0 && pos.y < GRID_H) {
+                        if (MAP[pos.y][pos.x] === 0 && !Object.values(STATIONS).some(s => s.label !== sim.dragTarget && s.x === pos.x && s.y === pos.y)) {
+                            STATIONS[sim.dragTarget].x = pos.x; STATIONS[sim.dragTarget].y = pos.y; sim.draw();
+                        }
+                    }
+                }
+            },
+            handleMouseUp: (e) => {
+                if (sim.dragTarget) { sim.invalidateAnalysis(); sim.dragTarget = null; }
+                if (sim.userDangerStart) {
+                    const end = sim.getGridPos(e);
+                    sim.createUserDangerZone(sim.userDangerStart, end);
+                    sim.userDangerStart = null;
+                }
+            },
+            createUserDangerZone: (start, end) => {
+                if (start.x < 0 || end.x < 0) return;
+                let minX = Math.min(start.x, end.x), maxX = Math.max(start.x, end.x);
+                let minY = Math.min(start.y, end.y), maxY = Math.max(start.y, end.y);
+                let id = sim.userDangerIdCounter++;
+                let count = 0;
+                for (let y = minY; y <= maxY; y++) {
+                    for (let x = minX; x <= maxX; x++) {
+                        if (x >= 0 && x < GRID_W && y >= 0 && y < GRID_H) {
+                            AISLE_MAP[y][x] = id;
+                            count++;
+                        }
+                    }
+                }
+                if (count > 0) {
+                    sim.mutex.register(id);
+                    log('危險區建立', 'text-rose-400', `ID: ${id}`);
+                    sim.draw();
+                }
+            },
+            handleContextMenu: (e) => {
+                const pos = sim.getGridPos(e);
+                for (let key in STATIONS) if (STATIONS[key].x === pos.x && STATIONS[key].y === pos.y) {
+                    delete STATIONS[key]; sim.invalidateAnalysis(); sim.updateUI(); sim.draw(); return;
+                }
+                for (let i = 0; i < CHARGERS.length; i++) {
+                    if (CHARGERS[i].x === pos.x && CHARGERS[i].y === pos.y) {
+                        CHARGERS.splice(i, 1); sim.draw(); return;
+                    }
+                }
+            },
+            setTool: (mode) => {
+                sim.toolMode = mode;
+                document.querySelectorAll('.btn-tool').forEach(b => b.classList.remove('active', 'active-danger', 'active-success'));
+                if (mode === 'draw-danger') document.getElementById('tool-' + mode).classList.add('active-danger');
+                else if (mode === 'add-charger') document.getElementById('tool-' + mode).classList.add('active-success');
+                else document.getElementById('tool-' + mode).classList.add('active');
+
+                let toolName = mode === 'drag' ? '拖曳模式' : mode === 'add' ? '新增站點' : mode === 'add-charger' ? '新增充電樁' : '繪製禁區';
+                document.getElementById('tool-name').innerText = toolName;
+                let hint = document.getElementById('active-tool-display');
+                hint.classList.remove('opacity-0', 'translate-y-[-10px]');
+                setTimeout(() => hint.classList.add('opacity-0', 'translate-y-[-10px]'), 2000);
+            },
+            invalidateAnalysis: () => {
+                sim.analyzed = false;
+                document.getElementById('btn-analyze').classList.remove('opacity-50');
+                document.getElementById('btn-analyze').disabled = false;
+                document.getElementById('btn-start').classList.add('opacity-50', 'cursor-not-allowed');
+                document.getElementById('btn-start').disabled = true;
+                sim.updateStationDropdowns();
+            },
+            setTab: (tabId) => {
+                sim.activeTab = tabId;
+                ['controls', 'fleet', 'tasks', 'history', 'logs'].forEach(t => {
+                    let tabBtn = document.getElementById('tab-' + t);
+                    let tabContent = document.getElementById('content-' + t);
+                    if (tabBtn) tabBtn.classList.toggle('active', t === tabId);
+                    if (tabContent) tabContent.classList.toggle('hidden', t !== tabId);
+                });
+            },
+            setSpeed: (val) => {
+                sim.speedMultiplier = parseFloat(val);
+                document.getElementById('speed-val').innerText = sim.speedMultiplier.toFixed(1) + 'x';
+            },
+            incrementYieldCount: () => {
+                sim.yieldCount++;
+                let el = document.getElementById('stat-yields'); if (el) el.innerText = sim.yieldCount;
+            },
+
+            // --- LOGIC ---
+            generateWarehouseMap: () => {
+                log('系統', 'text-blue-400', '生成地圖');
+                loadRandomMap();
+                sim.agvs = []; sim.mutex = new MutexManager(); sim.running = false; sim.invalidateAnalysis();
+                sim.taskQueue = []; sim.tasks = {}; sim.yieldCount = 0; sim.taskCount = 0; sim.history = [];
+                sim.updateUI(); sim.updateHistoryBoard(); sim.updateFleetTable(); sim.draw();
+            },
+            analyzeMap: () => {
+                if (sim.analyzed) return;
+                MapAnalyzer.detectAisles(MAP, AISLE_MAP);
+                let setIds = new Set();
+                for (let y = 0; y < GRID_H; y++) for (let x = 0; x < GRID_W; x++) if (AISLE_MAP[y][x] > 0) setIds.add(AISLE_MAP[y][x]);
+                setIds.forEach(id => sim.mutex.register(id));
+
+                log('分析完成', 'text-purple-400', `識別 ${setIds.size} 個互斥區域`);
+                sim.analyzed = true;
+                document.getElementById('btn-analyze').classList.add('opacity-50');
+                document.getElementById('btn-analyze').disabled = true;
+                document.getElementById('btn-start').disabled = false;
+                document.getElementById('btn-start').classList.remove('opacity-50', 'cursor-not-allowed');
+                sim.draw();
+            },
+            startSimulation: () => {
+                if (!sim.analyzed) return;
+                sim.running = true;
+                document.getElementById('btn-start').disabled = true;
+                document.getElementById('btn-start').classList.add('opacity-50');
+                document.getElementById('btn-stop').disabled = false;
+                document.getElementById('btn-stop').classList.remove('opacity-50', 'cursor-not-allowed');
+                // Auto rest logic for idle agvs
+                sim.agvs.forEach(agv => { if (agv.state === 'IDLE') agv.vacateStation(); });
+                sim.loop();
+            },
+            stopSimulation: () => {
+                sim.running = false;
+                log('系統', 'text-yellow-400', '模擬已暫停');
+                document.getElementById('btn-start').disabled = false;
+                document.getElementById('btn-start').classList.remove('opacity-50');
+                document.getElementById('btn-stop').disabled = true;
+                document.getElementById('btn-stop').classList.add('opacity-50');
+            },
+
+            // Queue & Dispatch
+            manualDispatch: () => {
+                if (!sim.analyzed) { log('錯誤', 'text-rose-400', '請先執行識別'); return; }
+                const p = document.getElementById('sel-pickup').value;
+                const d = document.getElementById('sel-delivery').value;
+                if (!p || !d || p === d) return;
+                sim.addTaskToQueue(p, d);
+            },
+            addTaskToQueue: (pickup, delivery) => {
+                let id = sim.taskIdCounter++;
+                let task = { id, pickup, delivery, status: 'PENDING' };
+                sim.taskQueue.push(task);
+                sim.tasks[id] = task;
+                sim.updateTaskBoard();
+                if (!sim.running && sim.analyzed) sim.startSimulation();
+            },
+            toggleAutoGen: () => {
+                sim.autoMode = !sim.autoMode;
+                let knob = document.getElementById('auto-gen-knob');
+                let btn = document.getElementById('btn-auto-gen');
+                if (sim.autoMode) {
+                    knob.classList.add('translate-x-5');
+                    btn.classList.replace('bg-slate-600', 'bg-emerald-500');
+                    log('系統', 'text-emerald-400', '自動派工模式: ON');
+                } else {
+                    knob.classList.remove('translate-x-5');
+                    btn.classList.replace('bg-emerald-500', 'bg-slate-600');
+                    log('系統', 'text-slate-400', '自動派工模式: OFF');
+                }
+            },
+            autoGenLoop: () => {
+                if (!sim.running || !sim.autoMode) return;
+                if (sim.taskQueue.length < 5 && Math.random() > 0.3) {
+                    let keys = Object.keys(STATIONS);
+                    if (keys.length < 2) return;
+                    let p = keys[Math.floor(Math.random() * keys.length)];
+                    let d; do { d = keys[Math.floor(Math.random() * keys.length)]; } while (p === d);
+                    sim.addTaskToQueue(p, d);
+                }
+            },
+            dispatchLoop: () => {
+                if (!sim.running || sim.taskQueue.length === 0) return;
+
+                let task = sim.taskQueue[0];
+                let dynamicObs = sim.agvs.filter(a => a.state !== 'IDLE' && a.state !== 'MOVING_TO_REST').map(a => ({ x: a.x, y: a.y }));
+                let availableAGVs = sim.agvs.filter(a => a.state === 'IDLE' || a.state === 'MOVING_TO_REST');
+
+                if (availableAGVs.length > 0) {
+                    let bestAGV = Dispatcher.findBestAGV(availableAGVs, STATIONS[task.pickup], MAP, dynamicObs);
+                    if (bestAGV) {
+                        sim.taskQueue.shift(); // Remove from queue
+                        task.status = 'ACTIVE';
+                        bestAGV.setTask(task.id, task.pickup, task.delivery);
+                        log('派工', 'text-emerald-400', `任務 #${task.id} -> AGV #${bestAGV.id}`);
+                        sim.updateTaskBoard();
+                    }
+                }
+            },
+            completeTask: (taskId) => {
+                if (sim.tasks[taskId]) {
+                    let t = sim.tasks[taskId];
+                    sim.history.unshift({ ...t, status: 'COMPLETED', time: new Date().toLocaleTimeString() });
+                    if (sim.history.length > 20) sim.history.pop();
+                    delete sim.tasks[taskId];
+                    sim.updateTaskBoard();
+                    sim.updateHistoryBoard();
+                }
+                sim.taskCount++;
+                sim.updateUI();
+            },
+            deleteTask: (id) => {
+                sim.taskQueue = sim.taskQueue.filter(t => t.id !== id);
+                delete sim.tasks[id];
+                sim.updateTaskBoard();
+            },
+            clearHistory: () => {
+                sim.history = [];
+                sim.updateHistoryBoard();
+            },
+            manualResetAGV: (id) => {
+                let agv = sim.agvs.find(a => a.id === id);
+                if (agv) {
+                    // Release Locks
+                    let aid = AISLE_MAP[Math.round(agv.y)][Math.round(agv.x)];
+                    if (aid > 0) sim.mutex.release(aid, agv.id);
+                    agv.reset();
+                    log('手動復歸', 'text-amber-400', `AGV #${id} 已重置`);
+                }
+            },
+
+            // Entities
+            addRandomAGV: (silent = false) => {
+                let x, y, t = 0; do { x = Math.floor(Math.random() * GRID_W); y = Math.floor(Math.random() * GRID_H); t++; } while ((MAP[y][x] !== 0 || AISLE_MAP[y][x] > 0 || sim.agvs.some(a => a.x === x && a.y === y)) && t < 100);
+                if (t < 100) {
+                    let color = `hsl(${Math.random() * 360}, 70%, 50%)`;
+                    let agv = new AGV(sim.agvs.length + 1, x, y, color);
+                    sim.agvs.push(agv);
+                    if (!silent) log('系統', 'text-blue-400', `新增 AGV #${agv.id}`);
+                    sim.updateUI(); sim.draw();
+                }
+            },
+            addRandomStation: (silent = false) => {
+                let x, y, t = 0; do { x = Math.floor(Math.random() * GRID_W); y = Math.floor(Math.random() * GRID_H); t++; } while ((MAP[y][x] !== 0 || AISLE_MAP[y][x] > 0 || Object.values(STATIONS).some(s => s.x === x && s.y === y)) && t < 100);
+                if (t < 100) {
+                    let name = String.fromCharCode(nextStationChar++);
+                    STATIONS[name] = { x, y, color: '#f59e0b', label: name };
+                    if (!silent) sim.invalidateAnalysis(); sim.updateUI(); sim.draw();
+                }
+            },
+            removeAGV: () => {
+                if (sim.agvs.length > 0) {
+                    let removed = sim.agvs.pop();
+                    // Release any locks held by this AGV
+                    sim.mutex.locks.forEach((owner, aid) => {
+                        if (owner === removed.id) sim.mutex.release(aid, removed.id);
+                    });
+                    sim.updateUI(); sim.draw();
+                }
+            },
+            updateUI: () => {
+                document.getElementById('val-agv').innerText = sim.agvs.length;
+                let pending = sim.taskQueue.length;
+                document.getElementById('queue-stats').innerText = pending;
+                if (document.getElementById('task-count-badge')) document.getElementById('task-count-badge').innerText = pending;
+                if (document.getElementById('stat-tasks')) document.getElementById('stat-tasks').innerText = sim.taskCount;
+                if (document.getElementById('stat-yields')) document.getElementById('stat-yields').innerText = sim.yieldCount;
+                sim.updateStationDropdowns();
+            },
+            updateFleetTable: () => {
+                let list = document.getElementById('fleet-list');
+                if (!list) return;
+                if (sim.agvs.length === 0) {
+                    list.innerHTML = '<div class="text-center text-slate-500 text-xs py-4">無車輛</div>';
+                    return;
+                }
+                let html = '';
+                sim.agvs.forEach(a => {
+                    let taskInfo = a.taskPhase !== 'IDLE' ? `${a.pickupName}→${a.deliveryName}` : '閒置';
+                    let statusClass = 'status-idle';
+                    let statusLabel = 'Idle';
+                    if (a.state === 'CHARGING') { statusClass = 'status-charging'; statusLabel = 'Charging'; }
+                    else if (a.state === 'YIELDING') { statusClass = 'status-waiting'; statusLabel = 'Yielding'; }
+                    else if (a.taskPhase !== 'IDLE') { statusClass = 'status-working'; statusLabel = 'Working'; }
+                    else if (a.state === 'MOVING_TO_REST') { statusClass = 'text-slate-400 border-slate-600'; statusLabel = 'Parking'; }
+                    else if (a.state === 'BLOCKED') { statusClass = 'text-rose-400 border-rose-600'; statusLabel = 'Blocked'; }
+
+                    let batColor = a.battery < 30 ? 'bg-rose-500' : 'bg-emerald-500';
+
+                    html += `
+                    <div class="agv-card">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-slate-200 text-xs">AGV #${a.id}</span>
+                            <div class="flex items-center gap-2">
+                                <span class="status-badge ${statusClass}">${statusLabel}</span>
+                                <button onclick="sim.manualResetAGV(${a.id})" class="text-[9px] text-slate-500 hover:text-amber-400" title="強制復歸"><i class="fas fa-sync-alt"></i></button>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-[10px] text-slate-400">
+                            <span>任務: ${taskInfo}</span>
+                            <span>(${Math.round(a.x)}, ${Math.round(a.y)})</span>
+                        </div>
+                        <div class="w-full bg-slate-700 h-1.5 rounded-full mt-1 overflow-hidden">
+                            <div class="${batColor} h-full transition-all duration-500" style="width: ${a.battery}%"></div>
+                        </div>
+                    </div>`;
+                });
+                list.innerHTML = html;
+            },
+            updateTaskBoard: () => {
+                let board = document.getElementById('task-board');
+                if (!board) return;
+                let html = '';
+
+                // Queue
+                sim.taskQueue.forEach(t => {
+                    html += `
+                    <div class="task-card task-pending group">
+                        <div class="flex justify-between font-bold text-slate-300">
+                            <span><i class="fas fa-clock text-yellow-500 mr-1"></i> #${t.id} 等待中</span>
+                            <span class="font-mono">${t.pickup} → ${t.delivery}</span>
+                        </div>
+                        <i class="fas fa-trash-alt delete-task" onclick="sim.deleteTask(${t.id})"></i>
+                    </div>`;
+                });
+
+                // Active
+                sim.agvs.forEach(a => {
+                    if (a.currentTaskId) {
+                        html += `
+                        <div class="task-card task-active">
+                            <div class="flex justify-between font-bold text-slate-300">
+                                <span><i class="fas fa-spinner fa-spin text-emerald-500 mr-1"></i> #${a.currentTaskId} (AGV${a.id})</span>
+                                <span class="font-mono">${a.pickupName} → ${a.deliveryName}</span>
+                            </div>
+                            <div class="text-slate-400 mt-1 flex justify-between">
+                                <span>${a.taskPhase === 'TO_PICKUP' ? '前往取貨' : '運送中'}</span>
+                                <span><i class="fas fa-battery-half"></i> ${Math.floor(a.battery)}%</span>
+                            </div>
+                        </div>`;
+                    }
+                });
+
+                if (html === '') html = '<div class="text-center text-slate-600 text-[10px] mt-8 italic">尚無任務</div>';
+                board.innerHTML = html;
+                sim.updateUI();
+            },
+            updateHistoryBoard: () => {
+                let board = document.getElementById('history-board');
+                if (!board) return;
+                if (sim.history.length === 0) {
+                    board.innerHTML = '<div class="text-center text-slate-600 text-[10px] mt-8 italic">無歷史紀錄</div>';
+                    return;
+                }
+                let html = '';
+                sim.history.forEach(t => {
+                    html += `
+                    <div class="task-card task-history">
+                        <div class="flex justify-between text-slate-400">
+                            <span class="font-bold">#${t.id} 完成</span>
+                            <span class="text-[9px]">${t.time}</span>
+                        </div>
+                        <div class="flex justify-between text-slate-500 mt-1">
+                            <span class="font-mono">${t.pickup} → ${t.delivery}</span>
+                            <i class="fas fa-check-circle text-emerald-500"></i>
+                        </div>
+                    </div>`;
+                });
+                board.innerHTML = html;
+            },
+            updateStationDropdowns: () => {
+                const opts = Object.values(STATIONS).map(s => `<option value="${s.label}">站點 ${s.label}</option>`).join('');
+                document.getElementById('sel-pickup').innerHTML = opts;
+                document.getElementById('sel-delivery').innerHTML = opts;
+            },
+
+            update: () => {
+                if (!sim.running) return;
+                sim.agvs.forEach(agv => agv.update(sim.mutex, sim.agvs, sim.speedMultiplier));
+                if (sim.taskCount % 5 === 0) sim.updateFleetTable();
+            },
+
+            drawAGV: (ctx, x, y, color, angle, state, taskPhase, agv) => {
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(angle);
+
+                // LED Status Glow
+                if (state === 'YIELDING') {
+                    ctx.shadowBlur = 20; ctx.shadowColor = '#facc15';
+                } else if (state === 'MOVING') {
+                    ctx.shadowBlur = 15; ctx.shadowColor = '#3b82f6'; // Blue glow for moving
+                } else if (state === 'CHARGING') {
+                    ctx.shadowBlur = 15; ctx.shadowColor = '#10b981';
+                }
+
+                let w = 26, h = 20;
+
+                // Chassis (MiR Style Grey)
+                ctx.fillStyle = '#e2e8f0';
+                ctx.beginPath(); ctx.roundRect(-w / 2, -h / 2, w, h, 6); ctx.fill();
+
+                // Front Sensor (Black)
+                ctx.fillStyle = '#0f172a';
+                ctx.beginPath(); ctx.arc(w / 2 - 2, 0, 8, -Math.PI / 2, Math.PI / 2); ctx.fill();
+
+                // LED Band
+                let ledColor = '#94a3b8'; // Idle grey
+                if (state === 'YIELDING') ledColor = '#facc15'; // Yellow warn
+                else if (state === 'MOVING') ledColor = '#3b82f6'; // Blue move
+                else if (state === 'CHARGING') ledColor = '#10b981'; // Charging
+                else if (taskPhase === 'IDLE') ledColor = '#10b981'; // Green ready
+
+                ctx.strokeStyle = ledColor;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.roundRect(-w / 2 + 2, -h / 2 + 2, w - 4, h - 4, 4);
+                ctx.stroke();
+
+                // Cargo Icon on Top
+                ctx.shadowBlur = 0; // Reset shadow for crisp icon
+                if (taskPhase === 'TO_DELIVERY') {
+                    // Box
+                    ctx.fillStyle = '#b45309';
+                    ctx.fillRect(-6, -6, 12, 12);
+                    ctx.strokeStyle = '#78350f'; ctx.lineWidth = 1; ctx.strokeRect(-6, -6, 12, 12);
+                    // Cross lines
+                    ctx.beginPath(); ctx.moveTo(-6, -6); ctx.lineTo(6, 6); ctx.moveTo(6, -6); ctx.lineTo(-6, 6); ctx.stroke();
+                } else if (taskPhase === 'TO_PICKUP') {
+                    // Empty Pallet Arrow
+                    ctx.fillStyle = '#64748b';
+                    ctx.beginPath();
+                    ctx.moveTo(-4, -4); ctx.lineTo(4, 0); ctx.lineTo(-4, 4);
+                    ctx.fill();
+                } else if (state === 'CHARGING') {
+                    ctx.fillStyle = '#059669';
+                    ctx.font = '10px Arial'; ctx.fillText('⚡', -5, 3);
+                } else {
+                    // Idle Zzz
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.font = '10px Arial'; ctx.fillText('z', -3, 3);
+                }
+
+                ctx.restore();
+
+                // Overhead Label (A->B)
+                if (agv.taskPhase !== 'IDLE' && agv.pickupName && agv.deliveryName) {
+                    let lbl = `${agv.pickupName}→${agv.deliveryName}`;
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 9px Arial';
+                    ctx.textAlign = 'center';
+
+                    // Background for label
+                    let txtW = ctx.measureText(lbl).width + 6;
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.7)';
+                    ctx.fillRect(x - txtW / 2, y - 22, txtW, 12);
+
+                    ctx.fillStyle = '#38bdf8';
+                    ctx.fillText(lbl, x, y - 13);
+                }
+            },
+
+            draw: () => {
+                if (!MAP || !MAP.length) return;
+                const wrapper = canvas.parentElement;
+                canvas.width = wrapper.clientWidth; canvas.height = wrapper.clientHeight;
+                const mapW = GRID_W * CELL_SIZE; const mapH = GRID_H * CELL_SIZE;
+                const scale = Math.min(canvas.width / mapW, canvas.height / mapH) * 0.95;
+                const offX = (canvas.width - mapW * scale) / 2; const offY = (canvas.height - mapH * scale) / 2;
+
+                ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.save(); ctx.translate(offX, offY); ctx.scale(scale, scale);
+
+                for (let y = 0; y < GRID_H; y++) {
+                    for (let x = 0; x < GRID_W; x++) {
+                        let px = x * CELL_SIZE, py = y * CELL_SIZE;
+                        if (MAP[y][x] === 1) {
+                            ctx.fillStyle = '#1e293b'; ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
+                            ctx.fillStyle = '#334155'; ctx.fillRect(px + 2, py + 2, CELL_SIZE - 4, CELL_SIZE - 4);
+                        } else {
+                            ctx.strokeStyle = '#334155'; ctx.lineWidth = 0.5; ctx.strokeRect(px, py, CELL_SIZE, CELL_SIZE);
+                        }
+
+                        // Draw Chargers
+                        if (CHARGERS.some(c => c.x === x && c.y === y)) {
+                            ctx.fillStyle = 'rgba(16, 185, 129, 0.1)';
+                            ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
+                            ctx.fillStyle = '#059669';
+                            ctx.font = '8px Arial'; ctx.fillText('⚡', px + 6, py + 14);
+                        }
+
+                        let aid = AISLE_MAP[y][x];
+                        if (aid > 0) {
+                            let lockOwner = sim.mutex.locks.get(aid);
+                            ctx.fillStyle = lockOwner ? 'rgba(244, 63, 94, 0.4)' : 'rgba(244, 63, 94, 0.15)';
+                            ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
+                            if (lockOwner) { ctx.strokeStyle = '#f43f5e'; ctx.lineWidth = 2; ctx.strokeRect(px + 2, py + 2, CELL_SIZE - 4, CELL_SIZE - 4); }
+                        }
+                    }
+                }
+
+                Object.values(STATIONS).forEach(s => {
+                    let px = s.x * CELL_SIZE, py = s.y * CELL_SIZE;
+                    ctx.fillStyle = 'rgba(234, 179, 8, 0.2)'; ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
+                    ctx.strokeStyle = s.color; ctx.lineWidth = 2; ctx.strokeRect(px + 2, py + 2, CELL_SIZE - 4, CELL_SIZE - 4);
+                    ctx.fillStyle = '#fff'; ctx.font = 'bold 12px Arial'; ctx.textAlign = 'center';
+                    ctx.fillText(s.label, px + CELL_SIZE / 2, py + CELL_SIZE / 2 + 4);
+                });
+
+                sim.agvs.forEach(agv => {
+                    if (agv.path.length > 0) {
+                        ctx.beginPath(); ctx.strokeStyle = agv.color; ctx.lineWidth = 2; ctx.setLineDash([3, 3]); ctx.globalAlpha = 0.5;
+                        let startX = agv.visualX * CELL_SIZE + CELL_SIZE / 2; let startY = agv.visualY * CELL_SIZE + CELL_SIZE / 2;
+                        ctx.moveTo(startX, startY);
+                        for (let i = agv.pathIndex; i < agv.path.length; i++) {
+                            let p = agv.path[i]; ctx.lineTo(p.x * CELL_SIZE + CELL_SIZE / 2, p.y * CELL_SIZE + CELL_SIZE / 2);
+                        }
+                        ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1.0;
+                    }
+                });
+
+                sim.agvs.forEach(agv => {
+                    let cx = agv.visualX * CELL_SIZE + CELL_SIZE / 2;
+                    let cy = agv.visualY * CELL_SIZE + CELL_SIZE / 2;
+                    sim.drawAGV(ctx, cx, cy, agv.color, agv.angle, agv.state, agv.taskPhase, agv);
+
+                    // ID below
+                    ctx.fillStyle = '#fff'; ctx.font = 'bold 9px Arial'; ctx.textAlign = 'center';
+                    ctx.fillText('#' + agv.id, cx, cy + 18);
+
+                    let statusText = agv.waitingText;
+                    if (statusText) {
+                        ctx.fillStyle = '#facc15'; ctx.fillText(statusText, cx, cy + 28);
+                    }
+                });
+
+                // User drawing preview
+                if (sim.toolMode === 'draw-danger' && sim.userDangerStart && sim.dragCurrent) {
+                    let sx = sim.userDangerStart.x * CELL_SIZE;
+                    let sy = sim.userDangerStart.y * CELL_SIZE;
+                    let ex = sim.dragCurrent.x * CELL_SIZE + CELL_SIZE;
+                    let ey = sim.dragCurrent.y * CELL_SIZE + CELL_SIZE;
+                    ctx.strokeStyle = '#f87171'; ctx.lineWidth = 2; ctx.setLineDash([5, 5]);
+                    ctx.strokeRect(sx, sy, ex - sx, ey - sy); ctx.setLineDash([]);
+                }
+
+                ctx.restore();
+            },
+
+            loop: () => { sim.update(); sim.draw(); requestAnimationFrame(sim.loop); }
+        };
+
+        setTimeout(() => sim.init(), 100);
+        window.addEventListener('resize', () => sim.draw());
+
+        // Mobile Sidebar Toggle
+        function toggleMobileSidebar() {
+            // Find sidebar by looking for element with specific width class
+            const sidebar = document.querySelector('[class*="w-[360px]"]');
+            const backdrop = document.getElementById('mobile-backdrop');
+            const btn = document.getElementById('mobile-menu-btn');
+
+            
+
+            if (sidebar && backdrop && btn) {
+                const isOpen = sidebar.classList.contains('mobile-sidebar-open');
+                
+
+                if (isOpen) {
+                    // Close
+                    sidebar.classList.remove('mobile-sidebar-open');
+                    backdrop.classList.add('hidden');
+                    btn.innerHTML = '<i class="fas fa-bars text-lg"></i>';
+                    document.body.style.overflow = ''; // Enable scroll
+                } else {
+                    // Open
+                    sidebar.classList.add('mobile-sidebar-open');
+                    backdrop.classList.remove('hidden');
+                    btn.innerHTML = '<i class="fas fa-times text-lg"></i>';
+                    document.body.style.overflow = 'hidden'; // Disable scroll
+                }
+            } else {
+                
+            }
+        }
+
+        // Initialize backdrop click handler
+        setTimeout(() => {
+            const backdrop = document.getElementById('mobile-backdrop');
+            if (backdrop) {
+                backdrop.addEventListener('click', (e) => {
+                    
+                    toggleMobileSidebar();
+                });
+            }
+        }, 200);
+
+        // Generate QR Code
+        window.addEventListener('load', function () {
+            const qrcodeContainer = document.getElementById('qrcode');
+            if (qrcodeContainer && typeof QRCode !== 'undefined') {
+                qrcodeContainer.innerHTML = '';
+
+                new QRCode(qrcodeContainer, {
+                    text: window.location.href,
+                    width: 48,
+                    height: 48,
+                    colorDark: '#000000',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            }
+        });
+    </script>
+
+    <!-- Algorithm Modal -->
+    <div id="algoModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4"
+        style="background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(8px);"
+        onclick="if(event.target.id==='algoModal') sim.closeAlgoModal()">
+        <div class="glass-panel max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+            style="animation: slideInRight 0.3s ease-out;" onclick="event.stopPropagation();">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-6 border-b border-slate-700">
+                <div class="flex items-center gap-4">
+                    <div id="modal-icon" class="text-5xl"></div>
+                    <div>
+                        <h2 id="modal-title" class="text-2xl font-bold text-white"></h2>
+                        <p id="modal-subtitle" class="text-sm text-slate-400 mt-1"></p>
+                    </div>
+                </div>
+                <button onclick="sim.closeAlgoModal()"
+                    class="w-10 h-10 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-all flex items-center justify-center">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="flex-1 overflow-y-auto p-6">
+                <div id="modal-content" class="flex flex-col gap-6"></div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

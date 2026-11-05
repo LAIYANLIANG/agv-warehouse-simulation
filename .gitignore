@@ -1,0 +1,15 @@
+# Python virtual environment & cache
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Original raw draft / temp files (Explicitly excluded)
+agvpro.html
+build_index.py
+agv_simulation.html
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+
