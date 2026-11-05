@@ -10,6 +10,12 @@
 [![HTML5 Canvas](https://img.shields.io/badge/HTML5-Canvas-orange.svg)](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v3-38bdf8.svg)](https://tailwindcss.com/)
 
+<br>
+
+<img src="./assets/demo.png" alt="AGV Smart Warehouse Simulation Demo" width="900" style="border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,0.4);">
+
+<br><br>
+
 **Language Selection / 語言選擇 / 言語選択 / 언어 선택:**  
 [ 🇹🇼 繁體中文 ](#-繁體中文) • [ 🇺🇸 English ](#-english) • [ 🇯🇵 日本語 ](#-日本語) • [ 🇰🇷 한국어 ](#-한국어)
 
